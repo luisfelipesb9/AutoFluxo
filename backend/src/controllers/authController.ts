@@ -13,7 +13,7 @@ export const login = async (req: Request, res: Response) => {
     const validatedData = loginSchema.parse(req.body);
     const { login, senha } = validatedData;
 
-    const user = findUserByLogin(login);
+    const user = await findUserByLogin(login);
     if (!user) {
       logger.warn({ login }, "Tentativa de login com usuário inexistente");
       return res.status(401).json({ error: "Credenciais inválidas" });
@@ -26,7 +26,7 @@ export const login = async (req: Request, res: Response) => {
     }
 
     const accessToken = generateAccessToken(user);
-    const refreshToken = issueRefreshToken(user.id);
+    const refreshToken = await issueRefreshToken(user.id);
 
     logger.info({ userId: user.id, login }, "Login realizado com sucesso");
 
@@ -44,12 +44,12 @@ export const login = async (req: Request, res: Response) => {
   }
 };
 
-export const logout = (req: Request, res: Response) => {
+export const logout = async (req: Request, res: Response) => {
   try {
     const validatedData = refreshTokenSchema.parse(req.body);
     const { refreshToken } = validatedData;
 
-    invalidateRefreshToken(refreshToken);
+    await invalidateRefreshToken(refreshToken);
     logger.info("Logout realizado");
     return res.status(204).send();
   } catch (error) {

@@ -1,5 +1,5 @@
 import jwt, { VerifyOptions } from "jsonwebtoken";
-import { User } from "./userService";
+import { User } from "../entities/User";
 import {
   createRefreshToken,
   isRefreshTokenValid,
@@ -45,17 +45,16 @@ export const verifyAccessToken = (token: string): AuthPayload => {
   return jwt.verify(token, getJwtSecret(), verifyOptions) as AuthPayload;
 };
 
-export const issueRefreshToken = (userId: number): string => {
+export const issueRefreshToken = async (userId: number): Promise<string> => {
   return createRefreshToken(userId);
 };
 
-export const validateRefreshToken = (
+export const validateRefreshToken = async (
   token: string
-): { userId: number } | null => {
-  const record = isRefreshTokenValid(token);
-  return record ? { userId: record.userId } : null;
+): Promise<{ userId: number } | null> => {
+  return isRefreshTokenValid(token);
 };
 
-export const invalidateRefreshToken = (token: string): boolean => {
+export const invalidateRefreshToken = async (token: string): Promise<boolean> => {
   return revokeRefreshToken(token);
 };

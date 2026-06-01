@@ -8,7 +8,10 @@
     "start": "node dist/server.js",
     "lint": "eslint backend/src --ext .ts",
     "format": "prettier --write \"backend/src/**/*.ts\"",
-    "test": "jest"
+    "test": "jest",
+    "migrate:up": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run -d backend/src/lib/database.ts",
+    "migrate:down": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:revert -d backend/src/lib/database.ts",
+    "migrate:seed": "ts-node -r tsconfig-paths/register backend/src/seeds/index.ts"
   },
   "dependencies": {
     "bcrypt": "^5.1.0",
@@ -18,8 +21,12 @@
     "express-rate-limit": "^7.0.0",
     "helmet": "^7.0.0",
     "jsonwebtoken": "^9.0.2",
+    "pg": "^8.21.0",
     "pino": "^8.14.1",
     "pino-http": "^8.4.1",
+    "reflect-metadata": "^0.2.2",
+    "tsconfig-paths": "^4.2.0",
+    "typeorm": "^1.0.0",
     "zod": "^3.22.2"
   },
   "devDependencies": {

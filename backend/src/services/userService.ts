@@ -1,20 +1,12 @@
 import bcrypt from "bcrypt";
+import { AppDataSource } from "../lib/database";
+import { User } from "../entities/User";
 
 const SALT_ROUNDS = 12;
 
-export type User = {
-  id: number;
-  nome: string;
-  login: string;
-  perfil: string;
-  senhaHash: string;
-};
-
-// TODO: Mover para banco de dados quando connector estiver pronto
-const users: User[] = [];
-
-export const findUserByLogin = (login: string): User | undefined => {
-  return users.find((user) => user.login === login);
+export const findUserByLogin = async (login: string): Promise<User | null> => {
+  const userRepository = AppDataSource.getRepository(User);
+  return userRepository.findOne({ where: { login } });
 };
 
 export const verifyPassword = async (
@@ -26,4 +18,9 @@ export const verifyPassword = async (
 
 export const hashPassword = async (password: string): Promise<string> => {
   return bcrypt.hash(password, SALT_ROUNDS);
+};
+
+export const getUserById = async (id: number): Promise<User | null> => {
+  const userRepository = AppDataSource.getRepository(User);
+  return userRepository.findOne({ where: { id } });
 };

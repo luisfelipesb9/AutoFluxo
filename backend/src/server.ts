@@ -1,3 +1,4 @@
+import "reflect-metadata";
 import express from "express";
 import helmet from "helmet";
 import cors from "cors";
@@ -8,48 +9,63 @@ import errorHandler from "./middleware/errorHandler";
 import { apiLimiter } from "./middleware/rateLimiter";
 import { validateEnv } from "./config/env";
 import logger from "./lib/logger";
+import { initializeDatabase } from "./lib/database";
 
 dotenv.config();
 
 const config = validateEnv();
 
-const app = express();
+async function bootstrap(): Promise<express.Application> {
+  // Initialize database
+  await initializeDatabase();
 
-// Middlewares de segurança
-app.use(helmet());
-app.use(cors({
-  origin: process.env.CORS_ORIGIN ?? "http://localhost:3000",
-  credentials: true,
-}));
+  const app = express();
 
-// Logger HTTP
-app.use(pinoHttp({ logger }));
+  // Middlewares de segurança
+  app.use(helmet());
+  app.use(
+    cors({
+      origin: process.env.CORS_ORIGIN ?? "http://localhost:3000",
+      credentials: true,
+    })
+  );
 
-// Rate limiting
-app.use(apiLimiter);
+  // Logger HTTP
+  app.use(pinoHttp({ logger }));
 
-// Body parsing
-app.use(express.json({ limit: "10mb" }));
+  // Rate limiting
+  app.use(apiLimiter);
 
-// Rotas
-app.use("/api", rootRouter);
+  // Body parsing
+  app.use(express.json({ limit: "10mb" }));
 
-// Error handler
-app.use(errorHandler);
+  // Rotas
+  app.use("/api", rootRouter);
 
-// Iniciar servidor
-const port = config.PORT;
-const server = app.listen(port, () => {
-  logger.info(`✅ Server running on http://localhost:${port}`);
-});
+  // Error handler
+  app.use(errorHandler);
 
-// Graceful shutdown
-process.on("SIGTERM", () => {
-  logger.info("SIGTERM received, shutting down...");
-  server.close(() => {
-    logger.info("Server closed");
-    process.exit(0);
+  // Iniciar servidor
+  const port = config.PORT;
+  const server = app.listen(port, () => {
+    logger.info(`✅ Server running on http://localhost:${port}`);
   });
+
+  // Graceful shutdown
+  process.on("SIGTERM", () => {
+    logger.info("SIGTERM received, shutting down...");
+    server.close(() => {
+      logger.info("Server closed");
+      process.exit(0);
+    });
+  });
+
+  return app;
+}
+
+bootstrap().catch((error) => {
+  logger.error({ error }, "Failed to start server");
+  process.exit(1);
 });
 
-export default app;
+export default bootstrap;
