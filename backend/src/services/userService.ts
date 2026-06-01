@@ -11,9 +11,9 @@ export const findUserByLogin = async (login: string): Promise<User | null> => {
 
 export const verifyPassword = async (
   password: string,
-  senhaHash: string
+  hash: string
 ): Promise<boolean> => {
-  return bcrypt.compare(password, senhaHash);
+  return bcrypt.compare(password, hash);
 };
 
 export const hashPassword = async (password: string): Promise<string> => {

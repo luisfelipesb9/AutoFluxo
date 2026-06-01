@@ -1,14 +1,27 @@
 module.exports = {
+  displayName: "AutoFluxo API",
   preset: "ts-jest",
   testEnvironment: "node",
+  rootDir: "backend/src",
   testMatch: ["**/__tests__/**/*.test.ts"],
-  collectCoverageFrom: ["backend/src/**/*.ts", "!backend/src/server.ts"],
+  collectCoverageFrom: [
+    "**/*.ts",
+    "!**/*.test.ts",
+    "!**/__tests__/**",
+    "!server.ts",
+    "!config/**",
+    "!migrations/**",
+    "!seeds/**",
+  ],
   coverageThreshold: {
     global: {
-      branches: 50,
-      functions: 50,
-      lines: 50,
-      statements: 50,
+      statements: 80,
+      branches: 75,
+      functions: 80,
+      lines: 80,
     },
   },
+  setupFiles: ["<rootDir>/__tests__/setup.ts"],
+  testTimeout: 10000,
+  verbose: true,
 };

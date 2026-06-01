@@ -1,0 +1,33 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: autofluxo
+      POSTGRES_USER: autofluxo_user
+      POSTGRES_PASSWORD: secure_password_here
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    depends_on:
+      - db
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: autofluxo_user
+      DB_PASSWORD: secure_password_here
+      DB_NAME: autofluxo
+      JWT_SECRET: super_secure_jwt_secret_that_is_long_enough_32_chars
+      CORS_ORIGIN: http://localhost:3000
+    ports:
+      - "4000:4000"
+    command: npm run dev
+
+volumes:
+  db_data:

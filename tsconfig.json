@@ -18,7 +18,11 @@
     "sourceMap": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "lib": ["ES2020"]
+    "lib": ["ES2020"],
+    "baseUrl": "backend/src",
+    "paths": {
+      "@/*": ["./*"]
+    }
   },
   "include": ["backend/src"],
   "exclude": ["node_modules", "dist"]

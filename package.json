@@ -9,10 +9,14 @@
     "lint": "eslint backend/src --ext .ts",
     "format": "prettier --write \"backend/src/**/*.ts\"",
     "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:ci": "jest --ci --coverage --maxWorkers=2",
     "migrate:up": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run -d backend/src/lib/database.ts",
     "migrate:down": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:revert -d backend/src/lib/database.ts",
     "migrate:seed": "ts-node -r tsconfig-paths/register backend/src/seeds/index.ts"
   },
+  "prepare": "husky install",
   "dependencies": {
     "bcrypt": "^5.1.0",
     "cors": "^2.8.5",
@@ -33,16 +37,23 @@
     "@types/bcrypt": "^5.0.0",
     "@types/cors": "^2.8.13",
     "@types/express": "^4.17.17",
-    "@types/jest": "^29.5.2",
+    "@types/jest": "^29.5.14",
     "@types/jsonwebtoken": "^9.0.2",
     "@types/node": "^20.14.2",
+    "@types/supertest": "^7.2.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "eslint": "^8.45.0",
-    "jest": "^29.6.1",
+    "jest": "^29.7.0",
+    "jest-mock-extended": "^4.0.1",
     "prettier": "^3.0.0",
-    "ts-jest": "^29.1.0",
+    "supertest": "^7.2.2",
+    "ts-jest": "^29.4.11",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.5.4"
+  ,
+    "husky": "^8.0.0",
+    "@commitlint/config-conventional": "^17.5.0",
+    "@commitlint/cli": "^17.5.0"
   }
 }
