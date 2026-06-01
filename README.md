@@ -1,4 +1,73 @@
-# 🔧 AutoFluxo - Sistema de Gestão de Pedidos para Oficinas
+# AutoFluxo
+
+Instruções rápidas para executar o projeto localmente, rodar migrations, testes e Docker.
+
+## Requisitos
+- Node.js 18+
+- npm
+- Docker / docker-compose (para execução com Postgres)
+
+## Variáveis de ambiente obrigatórias
+- `JWT_SECRET` — secret de pelo menos 32 caracteres
+- `DATABASE_URL` — URL do Postgres (ex: `postgres://user:pass@localhost:5432/dbname`)
+
+## Scripts úteis (na raiz do repositório)
+- Instalar dependências:
+
+```
+npm install
+```
+
+- Compilar TypeScript:
+
+```
+npm run build
+```
+
+- Rodar testes (Jest):
+
+```
+npm test
+```
+
+## Migrations
+- Executar migrations up:
+
+```
+npm run migrate:up
+```
+
+- Reverter última migration:
+
+```
+npm run migrate:down
+```
+
+- Popular dados de seed:
+
+```
+npm run migrate:seed
+```
+
+## Docker (desenvolvimento)
+- Subir app + Postgres via `docker-compose`:
+
+```
+docker-compose up --build
+```
+
+- A API ficará disponível em `http://localhost:3000` (padrão). Swagger UI em `/api/docs`.
+
+## CI
+- Há um workflow básico em `.github/workflows/ci.yml` que executa build e testes.
+
+## Observações
+- Em testes unitários o `NODE_ENV=test` é usado para pular os rate limiters.
+- Mantenha `JWT_SECRET` seguro e com comprimento mínimo recomendado.
+
+Se quiser, eu posso:
+- Adicionar um job no CI para build/push da imagem Docker (registries configuráveis).
+- Completar a checklist de release e adicionar um `CHANGELOG.md`.# 🔧 AutoFluxo - Sistema de Gestão de Pedidos para Oficinas
 
 > **Status**: Em desenvolvimento com plano de execução detalhado  
 > **Fase Atual**: Infraestrutura de segurança e qualidade (✅ Completa)  
