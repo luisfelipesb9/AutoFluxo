@@ -1,0 +1,279 @@
+/* =========================================================
+   AUTOFLUXO - DESIGN SYSTEM
+   =========================================================
+   Descrição:
+   Sistema centralizado de estilos da aplicação AutoFluxo.
+
+   Contém:
+   - Tipografia
+   - Paleta de cores
+   - Status dos pedidos
+   - Espaçamentos
+   - Bordas
+   - Exemplos de utilização
+
+   Regra:
+   Não utilizar cores hardcoded nos componentes.
+   Sempre utilizar as variáveis CSS definidas neste arquivo.
+   ========================================================= */
+
+/* =========================================================
+   IMPORTAÇÃO DE FONTE
+   ========================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+
+/* =========================================================
+   TOKENS GLOBAIS
+   ========================================================= */
+
+:root {
+
+  /* =======================================================
+     TIPOGRAFIA
+     ======================================================= */
+
+  /* Fonte principal do sistema */
+  --font-family-base: 'Montserrat', sans-serif;
+
+  /* Escala tipográfica */
+  --font-size-xs: 11px;
+  --font-size-sm: 13px;
+  --font-size-base: 15px;
+  --font-size-md: 17px;
+  --font-size-lg: 20px;
+  --font-size-xl: 26px;
+
+  /* Pesos da fonte */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* =======================================================
+     PALETA PRINCIPAL
+     ======================================================= */
+
+  /* Cor principal da identidade visual */
+  --color-primary: #1E3A5F;
+
+  /* Cor de destaque para ações importantes */
+  --color-accent: #F59E0B;
+
+  /* Cor padrão de superfícies e fundos */
+  --color-surface: #F8FAFC;
+
+  /* Cor principal dos textos */
+  --color-text-primary: #0F172A;
+
+  /* Cor padrão para bordas */
+  --color-border: #E2E8F0;
+
+  /* =======================================================
+     STATUS DE PEDIDOS
+     ======================================================= */
+
+  /* ABERTO */
+  --status-aberto-bg: #EFF6FF;
+  --status-aberto-text: #1D4ED8;
+
+  /* PAGO */
+  --status-pago-bg: #F0FDF4;
+  --status-pago-text: #15803D;
+
+  /* EM SEPARAÇÃO */
+  --status-em-separacao-bg: #FFFBEB;
+  --status-em-separacao-text: #B45309;
+
+  /* EM MONTAGEM */
+  --status-em-montagem-bg: #FFF7ED;
+  --status-em-montagem-text: #C2410C;
+
+  /* CONCLUÍDO */
+  --status-concluido-bg: #F0FDF4;
+  --status-concluido-text: #166534;
+
+  /* CANCELADO */
+  --status-cancelado-bg: #FEF2F2;
+  --status-cancelado-text: #991B1B;
+
+  /* =======================================================
+     ESPAÇAMENTOS
+     ======================================================= */
+
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+  --spacing-2xl: 32px;
+
+  /* =======================================================
+     BORDAS
+     ======================================================= */
+
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+
+  /* =======================================================
+     SOMBRAS
+     ======================================================= */
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+/* =========================================================
+   ESTILOS BASE
+   ========================================================= */
+
+body {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-primary);
+  background-color: var(--color-surface);
+  margin: 0;
+  padding: 0;
+}
+
+/* =========================================================
+   CLASSES TIPOGRÁFICAS
+   ========================================================= */
+
+.text-xs {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.text-sm {
+  font-size: var(--font-size-sm);
+}
+
+.text-base {
+  font-size: var(--font-size-base);
+}
+
+.text-md {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+}
+
+.text-lg {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+}
+
+.text-xl {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+}
+
+/* =========================================================
+   BOTÃO PADRÃO
+   ========================================================= */
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-family: var(--font-family-base);
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+/* =========================================================
+   STATUS DOS PEDIDOS
+   ========================================================= */
+
+.status-aberto,
+.status-pago,
+.status-em-separacao,
+.status-em-montagem,
+.status-concluido,
+.status-cancelado {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ABERTO */
+
+.status-aberto {
+  background-color: var(--status-aberto-bg);
+  color: var(--status-aberto-text);
+}
+
+/* PAGO */
+
+.status-pago {
+  background-color: var(--status-pago-bg);
+  color: var(--status-pago-text);
+}
+
+/* EM SEPARAÇÃO */
+
+.status-em-separacao {
+  background-color: var(--status-em-separacao-bg);
+  color: var(--status-em-separacao-text);
+}
+
+/* EM MONTAGEM */
+
+.status-em-montagem {
+  background-color: var(--status-em-montagem-bg);
+  color: var(--status-em-montagem-text);
+}
+
+/* CONCLUÍDO */
+
+.status-concluido {
+  background-color: var(--status-concluido-bg);
+  color: var(--status-concluido-text);
+}
+
+/* CANCELADO */
+
+.status-cancelado {
+  background-color: var(--status-cancelado-bg);
+  color: var(--status-cancelado-text);
+}
+
+/* =========================================================
+   CARD PADRÃO
+   ========================================================= */
+
+.card {
+  background-color: white;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+/* =========================================================
+   EXEMPLOS DE USO
+   =========================================================
+
+   <span class="status-aberto">ABERTO</span>
+
+   <span class="status-pago">PAGO</span>
+
+   <span class="status-em-separacao">EM SEPARAÇÃO</span>
+
+   <span class="status-em-montagem">EM MONTAGEM</span>
+
+   <span class="status-concluido">CONCLUÍDO</span>
+
+   <span class="status-cancelado">CANCELADO</span>
+
+   ========================================================= */
