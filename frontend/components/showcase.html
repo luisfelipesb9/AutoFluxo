@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <title>
+        Gerenciautomix UI Components
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="../assets/design-system.css">
+
+    <link
+        rel="stylesheet"
+        href="./components.css">
+
+</head>
+
+<body
+    style="
+        background: var(--color-surface);
+        padding: 32px;
+        font-family: var(--font-family-base);
+    ">
+
+    <!-- ========================================= -->
+    <!-- TÍTULO                                   -->
+    <!-- ========================================= -->
+
+    <h1>
+        Gerenciautomix UI Components
+    </h1>
+
+    <p>
+        Página de demonstração dos componentes base do sistema.
+    </p>
+
+    <hr
+        style="
+            margin: 32px 0;
+            border: none;
+            border-top: 1px solid var(--color-border);
+        ">
+
+
+    <!-- ========================================= -->
+    <!-- BUTTONS                                  -->
+    <!-- ========================================= -->
+
+    <section>
+
+        <h2>
+            Buttons
+        </h2>
+
+        <div
+            style="
+                display:flex;
+                gap:12px;
+                flex-wrap:wrap;
+            ">
+
+            <button
+                class="btn btn--primary btn--md">
+
+                Primary
+
+            </button>
+
+            <button
+                class="btn btn--accent btn--md">
+
+                Accent
+
+            </button>
+
+            <button
+                class="btn btn--ghost btn--md">
+
+                Ghost
+
+            </button>
+
+            <button
+                class="btn btn--danger btn--md">
+
+                Danger
+
+            </button>
+
+        </div>
+
+        <br>
+
+        <div
+            style="
+                display:flex;
+                gap:12px;
+                flex-wrap:wrap;
+            ">
+
+            <button
+                class="btn btn--primary btn--sm">
+
+                Small
+
+            </button>
+
+            <button
+                class="btn btn--primary btn--md">
+
+                Medium
+
+            </button>
+
+            <button
+                class="btn btn--primary btn--lg">
+
+                Large
+
+            </button>
+
+        </div>
+
+        <br>
+
+        <button
+            class="btn btn--accent btn--md btn--loading">
+
+            Loading
+
+        </button>
+
+    </section>
+
+
+    <hr
+        style="
+            margin: 32px 0;
+            border: none;
+            border-top: 1px solid var(--color-border);
+        ">
+
+
+    <!-- ========================================= -->
+    <!-- INPUTS                                   -->
+    <!-- ========================================= -->
+
+    <section>
+
+        <h2>
+            Inputs
+        </h2>
+
+        <div
+            style="
+                max-width:400px;
+            ">
+
+            <div
+                class="input-group">
+
+                <input
+                    type="text"
+                    id="cliente"
+                    placeholder=" ">
+
+                <label
+                    for="cliente">
+
+                    Cliente
+
+                </label>
+
+            </div>
+
+            <div
+                class="input-group error">
+
+                <input
+                    type="text"
+                    id="email"
+                    placeholder=" ">
+
+                <label
+                    for="email">
+
+                    Email
+
+                </label>
+
+                <span
+                    class="input-message">
+
+                    Campo obrigatório
+
+                </span>
+
+            </div>
+
+            <div
+                class="input-group success">
+
+                <input
+                    type="text"
+                    id="telefone"
+                    placeholder=" "
+                    value="(38)99999-9999">
+
+                <label
+                    for="telefone">
+
+                    Telefone
+
+                </label>
+
+                <span
+                    class="input-message">
+
+                    Dados válidos
+
+                </span>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <hr
+        style="
+            margin: 32px 0;
+            border: none;
+            border-top: 1px solid var(--color-border);
+        ">
+
+
+    <!-- ========================================= -->
+    <!-- BADGES                                   -->
+    <!-- ========================================= -->
+
+    <section>
+
+        <h2>
+            Status Badges
+        </h2>
+
+        <div
+            style="
+                display:flex;
+                gap:12px;
+                flex-wrap:wrap;
+            ">
+
+            <span
+                class="badge badge--aberto">
+
+                <span
+                    class="badge-dot"></span>
+
+                ABERTO
+
+            </span>
+
+            <span
+                class="badge badge--pago">
+
+                <span
+                    class="badge-dot"></span>
+
+                PAGO
+
+            </span>
+
+            <span
+                class="badge badge--em-separacao">
+
+                <span
+                    class="badge-dot"></span>
+
+                EM_SEPARACAO
+
+            </span>
+
+            <span
+                class="badge badge--em-montagem">
+
+                <span
+                    class="badge-dot"></span>
+
+                EM_MONTAGEM
+
+            </span>
+
+            <span
+                class="badge badge--concluido">
+
+                <span
+                    class="badge-dot"></span>
+
+                CONCLUIDO
+
+            </span>
+
+            <span
+                class="badge badge--cancelado">
+
+                <span
+                    class="badge-dot"></span>
+
+                CANCELADO
+
+            </span>
+
+        </div>
+
+    </section>
+
+
+    <hr
+        style="
+            margin: 32px 0;
+            border: none;
+            border-top: 1px solid var(--color-border);
+        ">
+
+
+    <!-- ========================================= -->
+    <!-- CARDS                                    -->
+    <!-- ========================================= -->
+
+    <section>
+
+        <h2>
+            Cards
+        </h2>
+
+        <div
+            style="
+                display:grid;
+                grid-template-columns:
+                repeat(auto-fit,minmax(250px,1fr));
+                gap:16px;
+            ">
+
+            <div class="card">
+
+                <h3>
+                    Pedidos
+                </h3>
+
+                <p>
+                    125 pedidos ativos
+                </p>
+
+            </div>
+
+            <div class="card">
+
+                <h3>
+                    Estoque
+                </h3>
+
+                <p>
+                    548 itens cadastrados
+                </p>
+
+            </div>
+
+            <div class="card">
+
+                <h3>
+                    Faturamento
+                </h3>
+
+                <p>
+                    R$ 38.450,00
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <hr
+        style="
+            margin: 32px 0;
+            border: none;
+            border-top: 1px solid var(--color-border);
+        ">
+
+
+    <!-- ========================================= -->
+    <!-- MODAL                                    -->
+    <!-- ========================================= -->
+
+    <section>
+
+        <h2>
+            Modal
+        </h2>
+
+        <button
+            class="btn btn--primary btn--md"
+            onclick="openModal('demoModal')">
+
+            Abrir Modal
+
+        </button>
+
+    </section>
+
+
+    <!-- Modal -->
+
+    <div
+        class="modal-overlay"
+        id="demoModal">
+
+        <div
+            class="modal">
+
+            <div
+                class="modal-header">
+
+                <h3>
+                    Confirmar ação
+                </h3>
+
+            </div>
+
+            <div
+                class="modal-body">
+
+                Deseja continuar esta operação?
+
+            </div>
+
+            <div
+                class="modal-footer">
+
+                <button
+                    class="btn btn--ghost btn--md"
+                    onclick="closeModal('demoModal')">
+
+                    Cancelar
+
+                </button>
+
+                <button
+                    class="btn btn--accent btn--md">
+
+                    Confirmar
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <hr
+        style="
+            margin: 32px 0;
+            border: none;
+            border-top: 1px solid var(--color-border);
+        ">
+
+
+    <!-- ========================================= -->
+    <!-- TOAST                                    -->
+    <!-- ========================================= -->
+
+    <section>
+
+        <h2>
+            Toasts
+        </h2>
+
+        <div
+            style="
+                display:flex;
+                gap:12px;
+                flex-wrap:wrap;
+            ">
+
+            <button
+                class="btn btn--primary btn--md"
+                onclick="demoInfoToast()">
+
+                Info
+
+            </button>
+
+            <button
+                class="btn btn--accent btn--md"
+                onclick="demoSuccessToast()">
+
+                Success
+
+            </button>
+
+            <button
+                class="btn btn--danger btn--md"
+                onclick="demoErrorToast()">
+
+                Error
+
+            </button>
+
+            <button
+                class="btn btn--ghost btn--md"
+                onclick="demoWarningToast()">
+
+                Warning
+
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- ========================================= -->
+    <!-- SCRIPTS                                  -->
+    <!-- ========================================= -->
+
+    <script
+        src="./components.js">
+    </script>
+
+</body>
+
+</html>
