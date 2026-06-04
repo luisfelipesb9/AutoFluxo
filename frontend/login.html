@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Gerenciautomix - Login</title>
+
+    <link rel="stylesheet" href="./assets/design-system.css">
+    <link rel="stylesheet" href="./assets/login.css">
+
+</head>
+<body>
+
+<div class="login-container">
+
+    <section class="login-brand">
+
+        <div class="brand-content">
+
+            <h1>GERENCIAUTOMIX</h1>
+
+            <p>
+                Gestão inteligente para oficinas e autopeças.
+            </p>
+
+        </div>
+
+    </section>
+
+    <section class="login-form-section">
+
+        <div class="login-card">
+
+            <h2>Entrar</h2>
+
+            <form id="loginForm">
+
+                <div class="input-group">
+
+                    <input
+                        type="text"
+                        id="username"
+                        placeholder=" "
+                        required
+                    >
+
+                    <label for="username">
+                        Usuário
+                    </label>
+
+                </div>
+
+                <div class="input-group">
+
+                    <input
+                        type="password"
+                        id="password"
+                        placeholder=" "
+                        required
+                    >
+
+                    <label for="password">
+                        Senha
+                    </label>
+
+                    <button
+                        type="button"
+                        class="toggle-password"
+                        id="togglePassword">
+
+                        👁
+
+                    </button>
+
+                </div>
+
+                <div
+                    id="loginError"
+                    class="error-message">
+
+                </div>
+
+                <button
+                    type="submit"
+                    id="loginButton"
+                    class="btn-login">
+
+                    Entrar
+
+                </button>
+
+            </form>
+
+        </div>
+
+    </section>
+
+</div>
+
+<script src="./js/login.js"></script>
+
+</body>
+</html>
