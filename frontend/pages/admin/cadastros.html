@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-page="cadastros">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerenciautomix — Cadastros</title>
+  <link rel="stylesheet" href="../../assets/design-system.css">
+  <link rel="stylesheet" href="../../assets/layout.css">
+  <link rel="stylesheet" href="../../assets/components.css">
+  <link rel="stylesheet" href="./cadastros.css">
+</head>
+<body class="app-shell">
+
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+<aside id="sidebar" class="sidebar">
+  <div class="sidebar__logo">
+    <span class="sidebar__logo-dot"></span>
+    <span class="sidebar__logo-text">GERENCIAUTOMIX</span>
+  </div>
+  <nav id="sidebarMenu" class="sidebar__nav" aria-label="Menu principal"></nav>
+</aside>
+
+<div class="main-container">
+
+  <header class="header">
+    <div class="header__left">
+      <button id="hamburger" class="hamburger" aria-label="Abrir menu" aria-expanded="false">
+        <svg aria-hidden="true"><use href="../../icons/icons.svg#icon-menu"/></svg>
+      </button>
+      <h1 id="pageTitle" class="page-title">Cadastros</h1>
+    </div>
+    <div class="header__search">
+      <svg class="header__search-icon" aria-hidden="true">
+        <use href="../../icons/icons.svg#icon-search"/>
+      </svg>
+      <input type="search" id="globalSearch" class="header__search-input" placeholder="Buscar por placa, NF ou celular…" aria-label="Busca global">
+    </div>
+    <div class="header__actions">
+      <button class="header__notification" aria-label="Notificações">
+        <span class="notification-badge" aria-hidden="true"></span>
+        <svg aria-hidden="true"><use href="../../icons/icons.svg#icon-bell"/></svg>
+      </button>
+      <div class="user-menu">
+        <button id="userMenuTrigger" class="user-menu__trigger" aria-haspopup="true" aria-expanded="false" aria-controls="userDropdown">
+          <span id="headerUserName">Usuário</span>
+          <svg aria-hidden="true"><use href="../../icons/icons.svg#icon-chevron-down"/></svg>
+        </button>
+        <div id="userDropdown" class="user-dropdown" role="menu">
+          <a href="#" class="user-dropdown__item">Meu Perfil</a>
+          <a href="#" class="user-dropdown__item">Configurações</a>
+          <div class="user-dropdown__divider"></div>
+          <a href="#" id="headerLogoutBtn" class="user-dropdown__item user-dropdown__item--danger">Sair</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="content__wrapper">
+
+      <!-- Page Header -->
+      <div class="page-header">
+        <div>
+          <h2 class="page-header__title">Gestão de Cadastros</h2>
+          <p class="page-header__subtitle">Gerencie usuários, peças e clientes do sistema</p>
+        </div>
+        <button class="btn btn--accent btn--md" id="btnNovo">
+          <svg aria-hidden="true" style="width:16px;height:16px"><use href="../../icons/icons.svg#icon-plus"/></svg>
+          Novo
+        </button>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs" role="tablist" aria-label="Categorias de cadastro">
+        <button class="tab-btn tab--active" role="tab" data-tab="usuarios" aria-selected="true"  aria-controls="tabPanel">Usuários</button>
+        <button class="tab-btn"             role="tab" data-tab="pecas"    aria-selected="false" aria-controls="tabPanel">Peças</button>
+        <button class="tab-btn"             role="tab" data-tab="clientes" aria-selected="false" aria-controls="tabPanel">Clientes</button>
+      </div>
+
+      <!-- Action bar -->
+      <div class="action-bar">
+        <div class="action-bar__search">
+          <div class="field">
+            <input type="search" id="tableSearch" class="field__input" placeholder=" " aria-label="Buscar na tabela">
+            <label class="field__label" for="tableSearch">Buscar…</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div id="tableContainer" class="table-card" role="tabpanel" id="tabPanel"></div>
+
+    </div>
+  </main>
+</div>
+
+
+<!-- ── MODAL: CADASTRO ──────────────────────────────────── -->
+<div id="modalCadastro" class="modal-overlay" aria-modal="true" role="dialog" aria-labelledby="modalCadastroTitle">
+  <div class="modal">
+    <div class="modal__header">
+      <h2 id="modalCadastroTitle" class="modal__title">Novo Cadastro</h2>
+      <button class="modal__close" onclick="closeCadastroModal()" aria-label="Fechar">
+        <svg aria-hidden="true"><use href="../../icons/icons.svg#icon-x"/></svg>
+      </button>
+    </div>
+    <div class="modal__body">
+      <form id="modalForm" class="modal-form" novalidate>
+        <!-- Campos injetados por cadastros.js -->
+      </form>
+    </div>
+    <div class="modal__footer">
+      <button type="button" class="btn btn--ghost btn--md" onclick="closeCadastroModal()">Cancelar</button>
+      <button type="button" class="btn btn--accent btn--md" id="btnSalvar" onclick="saveCadastro()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ── MODAL: CONFIRMAR DESATIVAÇÃO ─────────────────────── -->
+<div id="modalConfirm" class="modal-overlay modal--sm" aria-modal="true" role="dialog" aria-labelledby="modalConfirmTitle">
+  <div class="modal modal--sm">
+    <div class="modal__header">
+      <h2 id="modalConfirmTitle" class="modal__title">Confirmar desativação</h2>
+      <button class="modal__close" onclick="closeConfirmModal()" aria-label="Fechar">
+        <svg aria-hidden="true"><use href="../../icons/icons.svg#icon-x"/></svg>
+      </button>
+    </div>
+    <div class="modal__body">
+      <p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);line-height:var(--line-height-base)">
+        Tem certeza que deseja desativar este registro?<br>
+        A ação pode ser revertida posteriormente pelo administrador.
+      </p>
+    </div>
+    <div class="modal__footer">
+      <button type="button" class="btn btn--ghost btn--md" onclick="closeConfirmModal()">Cancelar</button>
+      <button type="button" class="btn btn--danger btn--md" id="btnConfirmDeactivate" onclick="confirmDeactivate()">Desativar</button>
+    </div>
+  </div>
+</div>
+
+
+<script type="module" src="./cadastros.js"></script>
+</body>
+</html>

@@ -1,197 +1,262 @@
-/* =========================================================
-   GERENCIAUTOMIX - DESIGN SYSTEM
-   =========================================================
-   Sistema centralizado de tokens CSS.
-   Regra: Nunca usar cores hardcoded fora deste arquivo.
-   ========================================================= */
+/* ============================================================
+   GERENCIAUTOMIX — DESIGN SYSTEM v2
+   ============================================================
+   REGRA ABSOLUTA: Nenhuma cor, fonte, espaçamento ou sombra
+   pode ser declarado fora deste arquivo. Toda folha de estilos
+   do projeto DEVE consumir exclusivamente as custom properties
+   definidas aqui.
+   ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
 
-/* =========================================================
-   TOKENS GLOBAIS
-   ========================================================= */
-
+/* ============================================================
+   1. TOKENS — TIPOGRAFIA
+   ============================================================ */
 :root {
+  --font-family-base:    'Montserrat', sans-serif;
 
-  /* =======================================================
-     TIPOGRAFIA
-     ======================================================= */
+  /* Escala: xs → xl */
+  --font-size-xs:        11px;
+  --font-size-sm:        13px;
+  --font-size-base:      15px;
+  --font-size-md:        17px;
+  --font-size-lg:        20px;
+  --font-size-xl:        26px;
 
-  --font-family-base: 'Montserrat', sans-serif;
-
-  --font-size-xs:   11px;
-  --font-size-sm:   13px;
-  --font-size-base: 15px;
-  --font-size-md:   17px;
-  --font-size-lg:   20px;
-  --font-size-xl:   26px;
-
+  /* Pesos semânticos */
   --font-weight-regular:  400;
   --font-weight-medium:   500;
   --font-weight-semibold: 600;
   --font-weight-bold:     700;
 
-  /* =======================================================
-     PALETA PRINCIPAL
-     ======================================================= */
-
-  --color-primary:      #1E3A5F;
-  --color-accent:       #F59E0B;
-  --color-surface:      #F8FAFC;
-  --color-text-primary: #0F172A;
-  --color-text-muted:   #64748B;
-  --color-border:       #E2E8F0;
-  --color-white:        #FFFFFF;
-
-  /* Derivados semânticos */
-  --color-danger:         #DC2626;
-  --color-danger-bg:      #FEF2F2;
-  --color-danger-text:    #991B1B;
-  --color-success:        #16A34A;
-  --color-success-bg:     #F0FDF4;
-  --color-success-text:   #166534;
-  --color-warning:        #D97706;
-
-  /* =======================================================
-     STATUS DE PEDIDOS
-     ======================================================= */
-
-  --status-aberto-bg:         #EFF6FF;
-  --status-aberto-text:       #1D4ED8;
-
-  --status-pago-bg:           #F0FDF4;
-  --status-pago-text:         #15803D;
-
-  --status-em-separacao-bg:   #FFFBEB;
-  --status-em-separacao-text: #B45309;
-
-  --status-em-montagem-bg:    #FFF7ED;
-  --status-em-montagem-text:  #C2410C;
-
-  --status-concluido-bg:      #F0FDF4;
-  --status-concluido-text:    #166534;
-
-  --status-cancelado-bg:      #FEF2F2;
-  --status-cancelado-text:    #991B1B;
-
-  /* =======================================================
-     ESPAÇAMENTOS
-     ======================================================= */
-
-  --spacing-xs:  4px;
-  --spacing-sm:  8px;
-  --spacing-md:  12px;
-  --spacing-lg:  16px;
-  --spacing-xl:  24px;
-  --spacing-2xl: 32px;
-
-  /* =======================================================
-     BORDAS
-     ======================================================= */
-
-  --border-radius-sm: 4px;
-  --border-radius-md: 8px;
-  --border-radius-lg: 12px;
-  --border-radius-xl: 16px;
-
-  /* =======================================================
-     SOMBRAS
-     ======================================================= */
-
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.12);
-  --shadow-xl: 0 10px 30px rgba(0, 0, 0, 0.08);
-
-  /* =======================================================
-     TRANSIÇÕES
-     ======================================================= */
-
-  --transition-fast: 150ms ease;
-  --transition-base: 200ms ease;
-  --transition-slow: 300ms ease;
-
-  /* =======================================================
-     Z-INDEX
-     ======================================================= */
-
-  --z-dropdown: 999;
-  --z-sidebar:  1000;
-  --z-modal:    9999;
-  --z-toast:    99999;
-
+  /* Line-heights */
+  --line-height-tight:   1.25;
+  --line-height-base:    1.5;
+  --line-height-relaxed: 1.75;
 }
 
-/* =========================================================
-   RESET / BASE
-   ========================================================= */
+/* ============================================================
+   2. TOKENS — PALETA
+   ============================================================ */
+:root {
+  /* Primárias */
+  --color-primary:         #1E3A5F;
+  --color-primary-hover:   #16304F;
+  --color-primary-light:   #EEF3F9;
 
+  --color-accent:          #F59E0B;
+  --color-accent-hover:    #D97706;
+  --color-accent-light:    #FFFBEB;
+
+  /* Superfícies */
+  --color-white:           #FFFFFF;
+  --color-surface:         #F8FAFC;
+  --color-surface-raised:  #F1F5F9;
+
+  /* Texto */
+  --color-text-primary:    #0F172A;
+  --color-text-secondary:  #334155;
+  --color-text-muted:      #64748B;
+  --color-text-disabled:   #94A3B8;
+  --color-text-inverse:    #FFFFFF;
+
+  /* Bordas */
+  --color-border:          #E2E8F0;
+  --color-border-strong:   #CBD5E1;
+
+  /* Semânticas */
+  --color-danger:          #DC2626;
+  --color-danger-bg:       #FEF2F2;
+  --color-danger-text:     #991B1B;
+  --color-danger-border:   #FECACA;
+
+  --color-success:         #16A34A;
+  --color-success-bg:      #F0FDF4;
+  --color-success-text:    #166534;
+  --color-success-border:  #BBF7D0;
+
+  --color-warning:         #D97706;
+  --color-warning-bg:      #FFFBEB;
+  --color-warning-text:    #92400E;
+  --color-warning-border:  #FDE68A;
+
+  --color-info:            #0284C7;
+  --color-info-bg:         #F0F9FF;
+  --color-info-text:       #075985;
+  --color-info-border:     #BAE6FD;
+}
+
+/* ============================================================
+   3. TOKENS — STATUS DE PEDIDOS
+   ============================================================ */
+:root {
+  --status-aberto-bg:          #EFF6FF;
+  --status-aberto-text:        #1D4ED8;
+  --status-aberto-border:      #BFDBFE;
+
+  --status-pago-bg:            #F0FDF4;
+  --status-pago-text:          #15803D;
+  --status-pago-border:        #BBF7D0;
+
+  --status-em-separacao-bg:    #FFFBEB;
+  --status-em-separacao-text:  #B45309;
+  --status-em-separacao-border:#FDE68A;
+
+  --status-em-montagem-bg:     #FFF7ED;
+  --status-em-montagem-text:   #C2410C;
+  --status-em-montagem-border: #FED7AA;
+
+  --status-concluido-bg:       #F0FDF4;
+  --status-concluido-text:     #166534;
+  --status-concluido-border:   #BBF7D0;
+
+  --status-cancelado-bg:       #FEF2F2;
+  --status-cancelado-text:     #991B1B;
+  --status-cancelado-border:   #FECACA;
+}
+
+/* ============================================================
+   4. TOKENS — ESPAÇAMENTO (escala 4px)
+   ============================================================ */
+:root {
+  --space-1:   4px;
+  --space-2:   8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+}
+
+/* ============================================================
+   5. TOKENS — BORDAS E RAIOS
+   ============================================================ */
+:root {
+  --radius-sm:   4px;
+  --radius-md:   8px;
+  --radius-lg:  12px;
+  --radius-xl:  16px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+}
+
+/* ============================================================
+   6. TOKENS — SOMBRAS
+   ============================================================ */
+:root {
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.06), 0 4px 6px rgba(0,0,0,0.04);
+  --shadow-xl: 0 20px 25px rgba(0,0,0,0.07), 0 10px 10px rgba(0,0,0,0.04);
+}
+
+/* ============================================================
+   7. TOKENS — TRANSIÇÕES
+   ============================================================ */
+:root {
+  --ease-default:  cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in:       cubic-bezier(0.4, 0, 1, 1);
+  --ease-out:      cubic-bezier(0, 0, 0.2, 1);
+
+  --duration-fast:   100ms;
+  --duration-base:   200ms;
+  --duration-slow:   300ms;
+  --duration-slower: 400ms;
+
+  --transition-base: var(--duration-base) var(--ease-default);
+  --transition-slow: var(--duration-slow) var(--ease-default);
+}
+
+/* ============================================================
+   8. TOKENS — Z-INDEX (escala explícita, sem números mágicos)
+   ============================================================ */
+:root {
+  --z-base:       0;
+  --z-raised:    10;
+  --z-dropdown: 100;
+  --z-sticky:   200;
+  --z-overlay:  300;
+  --z-sidebar:  400;
+  --z-modal:    500;
+  --z-toast:    600;
+}
+
+/* ============================================================
+   9. TOKENS — LAYOUT
+   ============================================================ */
+:root {
+  --sidebar-width:          240px;
+  --sidebar-collapsed-width: 0px;
+  --header-height:           60px;
+  --content-max-width:     1280px;
+  --content-padding:    var(--space-6);
+}
+
+/* ============================================================
+   10. RESET MINIMALISTA
+   ============================================================ */
 *,
 *::before,
 *::after {
   box-sizing: border-box;
+  margin:     0;
+  padding:    0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
 }
 
 body {
-  font-family: var(--font-family-base);
-  font-size:   var(--font-size-base);
-  font-weight: var(--font-weight-regular);
+  font-family:      var(--font-family-base);
+  font-size:        var(--font-size-base);
+  font-weight:      var(--font-weight-regular);
+  line-height:      var(--line-height-base);
   color:            var(--color-text-primary);
   background-color: var(--color-surface);
-  margin:  0;
-  padding: 0;
+  -webkit-font-smoothing:  antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* =========================================================
-   CLASSES TIPOGRÁFICAS
-   ========================================================= */
+img, svg { display: block; max-width: 100%; }
+button, input, select, textarea { font-family: inherit; }
+a { color: inherit; text-decoration: none; }
+ul, ol { list-style: none; }
 
-.text-xs   { font-size: var(--font-size-xs);   font-weight: var(--font-weight-medium); }
-.text-sm   { font-size: var(--font-size-sm); }
-.text-base { font-size: var(--font-size-base); }
-.text-md   { font-size: var(--font-size-md);   font-weight: var(--font-weight-semibold); }
-.text-lg   { font-size: var(--font-size-lg);   font-weight: var(--font-weight-bold); }
-.text-xl   { font-size: var(--font-size-xl);   font-weight: var(--font-weight-bold); }
+/* ============================================================
+   11. UTILITÁRIOS TIPOGRÁFICOS
+   ============================================================ */
+.u-text-xs   { font-size: var(--font-size-xs);   font-weight: var(--font-weight-medium); line-height: var(--line-height-tight); }
+.u-text-sm   { font-size: var(--font-size-sm);   line-height: var(--line-height-base); }
+.u-text-base { font-size: var(--font-size-base); line-height: var(--line-height-base); }
+.u-text-md   { font-size: var(--font-size-md);   font-weight: var(--font-weight-semibold); line-height: var(--line-height-tight); }
+.u-text-lg   { font-size: var(--font-size-lg);   font-weight: var(--font-weight-bold);     line-height: var(--line-height-tight); }
+.u-text-xl   { font-size: var(--font-size-xl);   font-weight: var(--font-weight-bold);     line-height: var(--line-height-tight); }
 
-/* =========================================================
-   STATUS DOS PEDIDOS
-   ========================================================= */
+.u-text-muted    { color: var(--color-text-muted); }
+.u-text-secondary{ color: var(--color-text-secondary); }
+.u-text-danger   { color: var(--color-danger); }
+.u-text-success  { color: var(--color-success); }
 
-.status-aberto,
-.status-pago,
-.status-em-separacao,
-.status-em-montagem,
-.status-concluido,
-.status-cancelado {
-  display:       inline-block;
-  padding:       6px 12px;
-  border-radius: var(--border-radius-md);
-  font-size:     var(--font-size-sm);
-  font-weight:   var(--font-weight-semibold);
+/* ============================================================
+   12. UTILITÁRIOS DE VISIBILIDADE / ACESSIBILIDADE
+   ============================================================ */
+.u-sr-only {
+  position: absolute;
+  width:    1px;
+  height:   1px;
+  padding:  0;
+  margin:  -1px;
+  overflow: hidden;
+  clip:     rect(0,0,0,0);
+  white-space: nowrap;
+  border:   0;
 }
 
-.status-aberto       { background-color: var(--status-aberto-bg);         color: var(--status-aberto-text); }
-.status-pago         { background-color: var(--status-pago-bg);           color: var(--status-pago-text); }
-.status-em-separacao { background-color: var(--status-em-separacao-bg);   color: var(--status-em-separacao-text); }
-.status-em-montagem  { background-color: var(--status-em-montagem-bg);    color: var(--status-em-montagem-text); }
-.status-concluido    { background-color: var(--status-concluido-bg);      color: var(--status-concluido-text); }
-.status-cancelado    { background-color: var(--status-cancelado-bg);      color: var(--status-cancelado-text); }
+.u-hidden { display: none !important; }
 
-/* =========================================================
-   CARD PADRÃO
-   ========================================================= */
-
-.card {
-  background-color: var(--color-white);
-  border:           1px solid var(--color-border);
-  border-radius:    var(--border-radius-lg);
-  padding:          var(--spacing-lg);
-  box-shadow:       var(--shadow-sm);
-  transition:       box-shadow var(--transition-base),
-                    transform  var(--transition-base);
-}
-
-.card:hover {
-  transform:  translateY(-2px);
-  box-shadow: var(--shadow-lg);
-}

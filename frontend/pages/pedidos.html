@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-page="pedidos">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerenciautomix — Pedidos</title>
+  <link rel="stylesheet" href="../assets/design-system.css">
+  <link rel="stylesheet" href="../assets/layout.css">
+  <link rel="stylesheet" href="../assets/components.css">
+</head>
+<body class="app-shell">
+
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+<aside id="sidebar" class="sidebar">
+  <div class="sidebar__logo">
+    <span class="sidebar__logo-dot"></span>
+    <span class="sidebar__logo-text">GERENCIAUTOMIX</span>
+  </div>
+  <nav id="sidebarMenu" class="sidebar__nav" aria-label="Menu principal"></nav>
+</aside>
+
+<div class="main-container">
+  <header class="header">
+    <div class="header__left">
+      <button id="hamburger" class="hamburger" aria-label="Abrir menu" aria-expanded="false">
+        <svg aria-hidden="true"><use href="../icons/icons.svg#icon-menu"/></svg>
+      </button>
+      <h1 id="pageTitle" class="page-title"></h1>
+    </div>
+    <div class="header__search">
+      <svg class="header__search-icon" aria-hidden="true"><use href="../icons/icons.svg#icon-search"/></svg>
+      <input type="search" class="header__search-input" placeholder="Buscar por placa, NF ou celular..." aria-label="Busca global">
+    </div>
+    <div class="header__actions">
+      <button class="header__notification" aria-label="Notificacoes">
+        <span class="notification-badge" aria-hidden="true"></span>
+        <svg aria-hidden="true"><use href="../icons/icons.svg#icon-bell"/></svg>
+      </button>
+      <div class="user-menu">
+        <button id="userMenuTrigger" class="user-menu__trigger" aria-haspopup="true" aria-expanded="false" aria-controls="userDropdown">
+          <span id="headerUserName">Usuario</span>
+          <svg aria-hidden="true"><use href="../icons/icons.svg#icon-chevron-down"/></svg>
+        </button>
+        <div id="userDropdown" class="user-dropdown" role="menu">
+          <a href="#" class="user-dropdown__item">Meu Perfil</a>
+          <div class="user-dropdown__divider"></div>
+          <a href="#" id="headerLogoutBtn" class="user-dropdown__item user-dropdown__item--danger">Sair</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="content__wrapper">
+      <div class="page-header">
+        <div>
+          <h2 class="page-header__title">Pedidos</h2>
+          <p class="page-header__subtitle">Esta secao sera implementada na proxima sprint.</p>
+        </div>
+      </div>
+      <div class="card" style="padding:var(--space-12);text-align:center;color:var(--color-text-muted)">
+        <p style="font-size:var(--font-size-lg);font-weight:var(--font-weight-bold);margin-bottom:var(--space-2)">Sprint em andamento</p>
+        <p style="font-size:var(--font-size-sm)">Modulo de <strong>Pedidos</strong> sera entregue na proxima sprint conforme cronograma.</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+  import { requireAuth } from '../core/auth.js';
+  import { initLayout }  from '../components/layout.js';
+  requireAuth('../login.html');
+  document.addEventListener('DOMContentLoaded', () => initLayout({ pageTitle: 'Pedidos' }));
+</script>
+</body>
+</html>

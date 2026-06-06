@@ -1,0 +1,78 @@
+<!--
+  shell.html — FRAGMENTO DE REFERÊNCIA (não é uma página completa)
+  Copie este bloco <body> para cada nova página.
+  O layout.js preenche sidebar e header dinamicamente.
+-->
+
+<!-- Overlay mobile sidebar -->
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+<!-- Sidebar -->
+<aside id="sidebar" class="sidebar">
+  <div class="sidebar__logo">
+    <span class="sidebar__logo-dot"></span>
+    <span class="sidebar__logo-text">GERENCIAUTOMIX</span>
+  </div>
+  <nav id="sidebarMenu" class="sidebar__nav" aria-label="Menu principal"></nav>
+  <!-- sidebar-footer injetado por layout.js -->
+</aside>
+
+<!-- Main -->
+<div class="main-container">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header__left">
+      <button id="hamburger" class="hamburger" aria-label="Abrir menu" aria-expanded="false" aria-controls="sidebar">
+        <svg aria-hidden="true"><use href="../icons/icons.svg#icon-menu"/></svg>
+      </button>
+      <h1 id="pageTitle" class="page-title"><!-- preenchido por initLayout ou inline --></h1>
+    </div>
+
+    <div class="header__search">
+      <svg class="header__search-icon" aria-hidden="true">
+        <use href="../icons/icons.svg#icon-search"/>
+      </svg>
+      <input
+        type="search"
+        id="globalSearch"
+        class="header__search-input"
+        placeholder="Buscar por placa, NF ou celular…"
+        aria-label="Busca global"
+      >
+    </div>
+
+    <div class="header__actions">
+      <button class="header__notification" aria-label="Notificações">
+        <span class="notification-badge" aria-hidden="true"></span>
+        <svg aria-hidden="true"><use href="../icons/icons.svg#icon-bell"/></svg>
+      </button>
+
+      <div class="user-menu">
+        <button
+          id="userMenuTrigger"
+          class="user-menu__trigger"
+          aria-haspopup="true"
+          aria-expanded="false"
+          aria-controls="userDropdown">
+          <span id="headerUserName">Usuário</span>
+          <svg aria-hidden="true"><use href="../icons/icons.svg#icon-chevron-down"/></svg>
+        </button>
+        <div id="userDropdown" class="user-dropdown" role="menu">
+          <a href="#" class="user-dropdown__item" role="menuitem">Meu Perfil</a>
+          <a href="#" class="user-dropdown__item" role="menuitem">Configurações</a>
+          <div class="user-dropdown__divider"></div>
+          <a href="#" id="headerLogoutBtn" class="user-dropdown__item user-dropdown__item--danger" role="menuitem">Sair</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Conteúdo da página vai aqui -->
+  <main class="content">
+    <div class="content__wrapper">
+      <!-- PAGE CONTENT -->
+    </div>
+  </main>
+
+</div>

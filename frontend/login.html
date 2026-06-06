@@ -1,105 +1,142 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Gerenciautomix - Login</title>
-
-    <link rel="stylesheet" href="./assets/design-system.css">
-    <link rel="stylesheet" href="./assets/login.css">
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Gerenciautomix — Sistema de gestão para oficinas e autopeças">
+  <title>Gerenciautomix — Entrar</title>
+  <link rel="stylesheet" href="./assets/design-system.css">
+  <link rel="stylesheet" href="./assets/components.css">
+  <link rel="stylesheet" href="./assets/login.css">
 </head>
 <body>
 
+<!-- SVG sprite (inline para login não ter path relativo complicado) -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <symbol id="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+  </symbol>
+  <symbol id="icon-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+    <line x1="1" y1="1" x2="23" y2="23"/>
+  </symbol>
+  <symbol id="icon-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+    <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+  </symbol>
+  <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="20 6 9 17 4 12"/>
+  </symbol>
+</svg>
+
 <div class="login-container">
 
-    <section class="login-brand">
+  <!-- ── BRAND ─────────────────────────────────────────── -->
+  <section class="login-brand" aria-hidden="true">
+    <div class="brand-content">
 
-        <div class="brand-content">
+      <div class="brand-logo">
+        <span class="brand-logo__dot"></span>
+        <span class="brand-logo__name">GERENCIAUTOMIX</span>
+      </div>
 
-            <h1>GERENCIAUTOMIX</h1>
+      <p class="brand-tagline">
+        Gestão inteligente de processos<br>para oficinas e autopeças.
+      </p>
 
-            <p>
-                Gestão inteligente para oficinas e autopeças.
-            </p>
+      <ul class="brand-features">
+        <li class="brand-feature">
+          <span class="brand-feature__check">
+            <svg><use href="#icon-check"/></svg>
+          </span>
+          Controle de estoque em tempo real
+        </li>
+        <li class="brand-feature">
+          <span class="brand-feature__check">
+            <svg><use href="#icon-check"/></svg>
+          </span>
+          Fluxo completo de pedidos
+        </li>
+        <li class="brand-feature">
+          <span class="brand-feature__check">
+            <svg><use href="#icon-check"/></svg>
+          </span>
+          Perfis de acesso por operador
+        </li>
+      </ul>
 
+    </div>
+  </section>
+
+  <!-- ── FORMULÁRIO ────────────────────────────────────── -->
+  <section class="login-form-section">
+    <div class="login-card">
+
+      <p class="login-card__eyebrow">Bem-vindo</p>
+      <h1 class="login-card__title">Entrar no sistema</h1>
+      <p class="login-card__subtitle">Use suas credenciais de acesso fornecidas pelo administrador.</p>
+
+      <!-- Mensagem de erro (controlada por JS, nunca visível por CSS padrão) -->
+      <div id="loginError" class="login-error" role="alert" aria-live="assertive">
+        <svg aria-hidden="true"><use href="#icon-alert"/></svg>
+        <span id="loginErrorText"></span>
+      </div>
+
+      <form id="loginForm" class="login-form" novalidate>
+
+        <div class="field" id="fieldUsername">
+          <input
+            type="text"
+            id="username"
+            class="field__input"
+            placeholder=" "
+            autocomplete="username"
+            autocapitalize="none"
+            spellcheck="false"
+            required
+            aria-required="true"
+            aria-describedby="usernameHint"
+          >
+          <label class="field__label" for="username">Usuário</label>
         </div>
 
-    </section>
-
-    <section class="login-form-section">
-
-        <div class="login-card">
-
-            <h2>Entrar</h2>
-
-            <form id="loginForm">
-
-                <div class="input-group">
-
-                    <input
-                        type="text"
-                        id="username"
-                        placeholder=" "
-                        required
-                    >
-
-                    <label for="username">
-                        Usuário
-                    </label>
-
-                </div>
-
-                <div class="input-group">
-
-                    <input
-                        type="password"
-                        id="password"
-                        placeholder=" "
-                        required
-                    >
-
-                    <label for="password">
-                        Senha
-                    </label>
-
-                    <button
-                        type="button"
-                        class="toggle-password"
-                        id="togglePassword">
-
-                        👁
-
-                    </button>
-
-                </div>
-
-                <div
-                    id="loginError"
-                    class="error-message">
-
-                </div>
-
-                <button
-                    type="submit"
-                    id="loginButton"
-                    class="btn-login">
-
-                    Entrar
-
-                </button>
-
-            </form>
-
+        <div class="field field--has-suffix" id="fieldPassword">
+          <input
+            type="password"
+            id="password"
+            class="field__input"
+            placeholder=" "
+            autocomplete="current-password"
+            required
+            aria-required="true"
+          >
+          <label class="field__label" for="password">Senha</label>
+          <div class="field__suffix">
+            <button
+              type="button"
+              id="togglePassword"
+              aria-label="Mostrar senha"
+              aria-pressed="false">
+              <svg aria-hidden="true"><use id="eyeIcon" href="#icon-eye"/></svg>
+            </button>
+          </div>
         </div>
 
-    </section>
+        <button
+          type="submit"
+          id="loginButton"
+          class="btn btn--accent btn--lg btn--full">
+          Entrar
+        </button>
+
+      </form>
+
+    </div>
+  </section>
 
 </div>
 
-<script src="./js/login.js"></script>
-
+<script type="module" src="./pages/login.js"></script>
 </body>
 </html>
