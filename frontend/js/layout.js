@@ -1,144 +1,194 @@
+/* =========================================================
+   GERENCIAUTOMIX - LAYOUT.JS
+   - Menu dinâmico por perfil (com ícones)
+   - Sidebar footer com operador + logout
+   - Sidebar mobile (hamburger / overlay)
+   - Dropdown do usuário
+   ========================================================= */
+
 document.addEventListener("DOMContentLoaded", () => {
 
+    /* =====================================================
+       USUÁRIO LOGADO (mock — será substituído por JWT)
+       ===================================================== */
+
     const currentUser = {
-
-        name: "User",
-        role: "estoque"
-
+        name: "Samuel Freitas",
+        role: "admin"
+        /*
+          Perfis: admin | estoque | vendedor
+        */
     };
+
+    /* =====================================================
+       DETECTA PÁGINA ATUAL
+       ===================================================== */
+
+    const isAdminPage = window.location.pathname.includes("/admin/");
+
+    /* =====================================================
+       ROTAS
+       ===================================================== */
+
+    const routes = {
+        dashboard: isAdminPage ? "../dashboard.html" : "./dashboard.html",
+        cadastros:  isAdminPage ? "./cadastros.html"  : "./admin/cadastros.html"
+    };
+
+    /* =====================================================
+       MENUS POR PERFIL (com ícones)
+       ===================================================== */
 
     const menuItems = {
 
         admin: [
-            "Dashboard",
-            "Pedidos",
-            "Usuários",
-            "Relatórios"
+            { icon: "📊", title: "Dashboard", url: routes.dashboard },
+            { icon: "📋", title: "Cadastros",  url: routes.cadastros },
+            { icon: "🛒", title: "Pedidos",    url: "#" },
+            { icon: "📈", title: "Relatórios", url: "#" }
         ],
 
         estoque: [
-            "Dashboard",
-            "Pedidos",
-            "Estoque"
+            { icon: "📊", title: "Dashboard", url: routes.dashboard },
+            { icon: "🛒", title: "Pedidos",   url: "#" },
+            { icon: "📦", title: "Estoque",   url: "#" }
         ],
 
         vendedor: [
-            "Dashboard",
-            "Pedidos"
+            { icon: "📊", title: "Dashboard", url: routes.dashboard },
+            { icon: "🛒", title: "Pedidos",   url: "#" }
         ]
 
     };
 
-    /* MENU DINÂMICO */
+    /* =====================================================
+       SIDEBAR — menu dinâmico
+       ===================================================== */
 
-    const sidebarMenu =
-        document.getElementById("sidebarMenu");
+    const sidebarMenu = document.getElementById("sidebarMenu");
 
     if (sidebarMenu) {
 
         sidebarMenu.innerHTML = "";
 
-        menuItems[currentUser.role].forEach(
-            (item, index) => {
+        const items = menuItems[currentUser.role] || menuItems.admin;
 
-                const link =
-                    document.createElement("a");
+        items.forEach((item) => {
 
-                link.href = "#";
+            const link = document.createElement("a");
+            link.href = item.url;
+            link.classList.add("menu-item");
 
-                link.className =
-                    index === 0
-                        ? "menu-item active"
-                        : "menu-item";
-
-                link.textContent = item;
-
-                sidebarMenu.appendChild(link);
-
+            /* Item ativo */
+            const targetFile = item.url.split("/").pop();
+            if (window.location.pathname.endsWith(targetFile)) {
+                link.classList.add("active");
             }
-        );
+
+            link.innerHTML = `
+                <span class="menu-icon">${item.icon}</span>
+                <span>${item.title}</span>
+            `;
+
+            sidebarMenu.appendChild(link);
+
+        });
 
     }
 
-    /* NOME DO USUÁRIO */
+    /* =====================================================
+       SIDEBAR — footer com operador + logout
+       ===================================================== */
 
-    const userMenu =
-        document.getElementById("userMenu");
+    const sidebar = document.getElementById("sidebar");
 
+    if (sidebar) {
+
+        /* Remove footer existente para evitar duplicatas */
+        const existingFooter = sidebar.querySelector(".sidebar-footer");
+        if (existingFooter) existingFooter.remove();
+
+        const footer = document.createElement("div");
+        footer.className = "sidebar-footer";
+        footer.innerHTML = `
+            <span class="sidebar-operator">${currentUser.name}</span>
+            <button class="sidebar-logout" id="sidebarLogoutBtn">Sair</button>
+        `;
+        sidebar.appendChild(footer);
+
+        document.getElementById("sidebarLogoutBtn").addEventListener("click", () => {
+            window.location.href = isAdminPage ? "../login.html" : "./login.html";
+        });
+
+    }
+
+    /* =====================================================
+       NOME NO HEADER
+       ===================================================== */
+
+    const userMenu = document.getElementById("userMenu");
     if (userMenu) {
+        userMenu.innerHTML = `${currentUser.name} ▼`;
+    }
 
-        userMenu.textContent =
-            `${currentUser.name} ▼`;
+    /* =====================================================
+       SIDEBAR MOBILE — hamburger
+       ===================================================== */
+
+    const overlay   = document.getElementById("overlay");
+    const hamburger = document.getElementById("hamburger");
+
+    if (hamburger && sidebar && overlay) {
+
+        hamburger.addEventListener("click", () => {
+            sidebar.classList.toggle("open");
+            overlay.classList.toggle("active");
+        });
 
     }
 
-    /* MOBILE SIDEBAR */
+    if (overlay && sidebar) {
 
-    const sidebar =
-        document.getElementById("sidebar");
-
-    const overlay =
-        document.getElementById("overlay");
-
-    const hamburger =
-        document.getElementById("hamburger");
-
-    if (hamburger) {
-
-        hamburger.addEventListener(
-            "click",
-            () => {
-
-                sidebar.classList.toggle("open");
-
-                overlay.classList.toggle("active");
-
-            }
-        );
+        overlay.addEventListener("click", () => {
+            sidebar.classList.remove("open");
+            overlay.classList.remove("active");
+        });
 
     }
 
-    if (overlay) {
+    /* =====================================================
+       DROPDOWN DO USUÁRIO
+       ===================================================== */
 
-        overlay.addEventListener(
-            "click",
-            () => {
-
-                sidebar.classList.remove("open");
-
-                overlay.classList.remove("active");
-
-            }
-        );
-
-    }
-
-    /* DROPDOWN */
-
-    const dropdownMenu =
-        document.getElementById("dropdownMenu");
+    const dropdownMenu = document.getElementById("dropdownMenu");
 
     if (userMenu && dropdownMenu) {
 
-        userMenu.addEventListener(
-            "click",
-            (event) => {
+        userMenu.addEventListener("click", (event) => {
+            event.stopPropagation();
+            dropdownMenu.classList.toggle("show");
+        });
 
-                event.stopPropagation();
-
-                dropdownMenu.classList.toggle("show");
-
-            }
-        );
-
-        document.addEventListener(
-            "click",
-            () => {
-
+        document.addEventListener("click", (event) => {
+            if (!userMenu.contains(event.target) && !dropdownMenu.contains(event.target)) {
                 dropdownMenu.classList.remove("show");
-
             }
-        );
+        });
+
+    }
+
+    /* =====================================================
+       LOGOUT (header)
+       ===================================================== */
+
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    if (logoutBtn) {
+
+        logoutBtn.addEventListener("click", (event) => {
+            event.preventDefault();
+            window.location.href = isAdminPage ? "../login.html" : "./login.html";
+        });
 
     }
 

@@ -1,59 +1,51 @@
-const passwordInput =
-    document.getElementById("password");
+/* =========================================================
+   GERENCIAUTOMIX - LOGIN
+   ========================================================= */
 
-const togglePassword =
-    document.getElementById("togglePassword");
+const passwordInput  = document.getElementById("password");
+const togglePassword = document.getElementById("togglePassword");
+const loginForm      = document.getElementById("loginForm");
+const loginButton    = document.getElementById("loginButton");
+const loginError     = document.getElementById("loginError");
 
+/* Toggle visibilidade da senha */
 togglePassword.addEventListener("click", () => {
-
-    passwordInput.type =
-        passwordInput.type === "password"
-            ? "text"
-            : "password";
-
+    const isPassword = passwordInput.type === "password";
+    passwordInput.type = isPassword ? "text" : "password";
+    togglePassword.textContent = isPassword ? "🙈" : "👁";
 });
 
-const loginForm =
-    document.getElementById("loginForm");
+/* Submit */
+loginForm.addEventListener("submit", async (e) => {
 
-const loginButton =
-    document.getElementById("loginButton");
+    e.preventDefault();
 
-const loginError =
-    document.getElementById("loginError");
+    loginError.textContent = "";
 
-loginForm.addEventListener(
-    "submit",
-    async (e) => {
+    /* Ativa loading state */
+    loginButton.classList.add("btn--loading");
+    loginButton.disabled = true;
 
-        e.preventDefault();
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
-        loginError.textContent = "";
+    const username = document.getElementById("username").value.trim();
 
-        loginButton.disabled = true;
-        loginButton.textContent = "Entrando...";
-
-        await new Promise(
-            resolve => setTimeout(resolve, 1500)
-        );
-
-        const username =
-            document.getElementById("username").value;
-
-        if(username === "admin"){
-
-            window.location.href =
-                "dashboard.html";
-
-            return;
-
-        }
-
-        loginError.textContent =
-            "Usuário ou senha inválidos. Verifique suas credenciais e tente novamente.";
-
-        loginButton.disabled = false;
-        loginButton.textContent = "Entrar";
-
+    /* Redirecionamento por perfil */
+    if (username === "admin") {
+        window.location.href = "dashboard.html";
+        return;
     }
-);
+
+    if (username === "estoque" || username === "vendedor") {
+        window.location.href = "dashboard.html";
+        return;
+    }
+
+    /* Erro amigável */
+    loginError.textContent =
+        "Usuário ou senha inválidos. Verifique suas credenciais e tente novamente.";
+
+    loginButton.classList.remove("btn--loading");
+    loginButton.disabled = false;
+
+});

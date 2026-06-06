@@ -1,33 +1,21 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Gerenciautomix</title>
-
+    <title>Gerenciautomix — Dashboard</title>
     <link rel="stylesheet" href="./assets/design-system.css">
     <link rel="stylesheet" href="./assets/layout.css">
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
+    <link rel="stylesheet" href="./components/components.css">
 </head>
-
 <body>
 
 <div class="overlay" id="overlay"></div>
 
 <aside class="sidebar" id="sidebar">
-
-    <div class="sidebar-logo">
-        GERENCIAUTOMIX
-    </div>
-
-    <nav class="sidebar-menu" id="sidebarMenu">
-    </nav>
-
+    <div class="sidebar-logo">GERENCIAUTOMIX</div>
+    <nav class="sidebar-menu" id="sidebarMenu"></nav>
+    <!-- sidebar-footer renderizado por layout.js -->
 </aside>
 
 <div class="main-container">
@@ -35,106 +23,54 @@
     <header class="header">
 
         <div class="header-left">
-
-            <button
-                class="hamburger"
-                id="hamburger">
-
-                ☰
-
-            </button>
-
-            <h1 class="page-title">
-                Dashboard
-            </h1>
-
+            <button class="hamburger" id="hamburger">☰</button>
+            <h1 class="page-title">Dashboard</h1>
         </div>
 
         <div class="header-center">
-
             <div class="search-wrapper">
-
-                <i class="fa-solid fa-magnifying-glass search-icon"></i>
-
-                <input
-                    type="text"
-                    class="search-input"
-                    placeholder="Buscar por placa, NF ou celular">
-
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+                <input type="text" class="search-input" placeholder="Buscar por placa, NF ou celular">
             </div>
-
         </div>
 
         <div class="header-actions">
 
-            <button class="notification-btn">
-
+            <button class="notification-btn" title="Notificações">
                 <span class="notification-dot"></span>
-
-                <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24">
-
-                    <path
-                        fill="currentColor"
-                        d="M12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2zm6-6V11a6 6 0 1 0-12 0v5l-2 2v1h16v-1z"/>
-
+                <svg width="18" height="18" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2zm6-6V11a6 6 0 1 0-12 0v5l-2 2v1h16v-1z"/>
                 </svg>
-
             </button>
 
             <div class="user-dropdown">
-
-                <button
-                    class="user-menu"
-                    id="userMenu">
-
-                    User ▼
-
-                </button>
-
-                <div
-                    class="dropdown-menu"
-                    id="dropdownMenu">
-
-                    <a href="#">
-                        Meu Perfil
-                    </a>
-
-                    <a href="#">
-                        Configurações
-                    </a>
-
-                    <a href="#">
-                        Sair
-                    </a>
-
+                <button class="user-menu" id="userMenu">User ▼</button>
+                <div class="dropdown-menu" id="dropdownMenu">
+                    <a href="#">Meu Perfil</a>
+                    <a href="#">Configurações</a>
+                    <a href="#" id="logoutBtn">Sair</a>
+                </div>
             </div>
-
-</div>
 
         </div>
 
     </header>
 
     <main class="content">
-
         <div class="content-wrapper">
 
-            <h2>Dashboard</h2>
-
-            <p>
-                Área principal do sistema.
-            </p>
+            <h2>Bem-vindo ao Gerenciautomix</h2>
+            <p>Área principal do sistema.</p>
 
         </div>
-
     </main>
 
 </div>
 
 <script src="./js/layout.js"></script>
+<script src="./components/components.js"></script>
 
 </body>
 </html>
