@@ -25,6 +25,12 @@ const ROUTES = [
     roles: ['admin', 'estoque', 'vendedor', 'caixa', 'montador'],
   },
   {
+    path:  'pages/novo-pedido.html',
+    label: 'Novo Pedido',
+    icon:  'icon-plus',
+    roles: ['vendedor', 'admin', 'caixa'],
+  },
+  {
     path:  'pages/estoque.html',
     label: 'Estoque',
     icon:  'icon-estoque',

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-page="novo-pedido">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerenciautomix — Novo Pedido</title>
+  <link rel="stylesheet" href="../assets/design-system.css">
+  <link rel="stylesheet" href="../assets/layout.css">
+  <link rel="stylesheet" href="../assets/components.css">
+  <link rel="stylesheet" href="./novo-pedido.css">
+</head>
+<body class="app-shell">
+
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+<aside id="sidebar" class="sidebar">
+  <div class="sidebar__logo">
+    <span class="sidebar__logo-dot"></span>
+    <span class="sidebar__logo-text">GERENCIAUTOMIX</span>
+  </div>
+  <nav id="sidebarMenu" class="sidebar__nav" aria-label="Menu principal"></nav>
+</aside>
+
+<div class="main-container">
+
+  <header class="header">
+    <div class="header__left">
+      <button id="hamburger" class="hamburger" aria-label="Abrir menu" aria-expanded="false">
+        <svg aria-hidden="true"><use href="../icons/icons.svg#icon-menu"/></svg>
+      </button>
+      <h1 id="pageTitle" class="page-title">Novo Pedido</h1>
+    </div>
+    <div class="header__search">
+      <svg class="header__search-icon" aria-hidden="true">
+        <use href="../icons/icons.svg#icon-search"/>
+      </svg>
+      <input type="search" id="globalSearch" class="header__search-input"
+             placeholder="Buscar por placa, NF ou celular…" aria-label="Busca global">
+    </div>
+    <div class="header__actions">
+      <button class="header__notification" aria-label="Notificações">
+        <span class="notification-badge" aria-hidden="true"></span>
+        <svg aria-hidden="true"><use href="../icons/icons.svg#icon-bell"/></svg>
+      </button>
+      <div class="user-menu">
+        <button id="userMenuTrigger" class="user-menu__trigger"
+                aria-haspopup="true" aria-expanded="false" aria-controls="userDropdown">
+          <span id="headerUserName">Usuário</span>
+          <svg aria-hidden="true"><use href="../icons/icons.svg#icon-chevron-down"/></svg>
+        </button>
+        <div id="userDropdown" class="user-dropdown" role="menu">
+          <a href="#" class="user-dropdown__item">Meu Perfil</a>
+          <a href="#" class="user-dropdown__item">Configurações</a>
+          <div class="user-dropdown__divider"></div>
+          <a href="#" id="headerLogoutBtn" class="user-dropdown__item user-dropdown__item--danger">Sair</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="content__wrapper">
+
+      <!-- Page Header -->
+      <div class="page-header">
+        <div>
+          <h2 class="page-header__title">Novo Pedido</h2>
+          <p class="page-header__subtitle">Siga os passos para registrar um pedido</p>
+        </div>
+      </div>
+
+      <div class="pedido-layout">
+
+        <!-- ── Stepper ──────────────────────────────────────── -->
+        <nav class="stepper" aria-label="Progresso do pedido">
+
+          <div class="stepper__step stepper__step--active" id="stepIndicator1" aria-current="step">
+            <div class="stepper__circle" id="stepCircle1">1</div>
+            <span class="stepper__label">Cliente</span>
+          </div>
+
+          <div class="stepper__line" id="stepLine1"></div>
+
+          <div class="stepper__step" id="stepIndicator2">
+            <div class="stepper__circle" id="stepCircle2">2</div>
+            <span class="stepper__label">Itens</span>
+          </div>
+
+          <div class="stepper__line" id="stepLine2"></div>
+
+          <div class="stepper__step" id="stepIndicator3">
+            <div class="stepper__circle" id="stepCircle3">3</div>
+            <span class="stepper__label">Confirmar</span>
+          </div>
+
+        </nav>
+
+        <!-- ── Passo 1: Cliente ─────────────────────────────── -->
+        <div class="step-panel step-panel--active" id="step-1" role="region" aria-labelledby="step1Heading">
+          <div class="step-card">
+            <h3 class="step-card__title" id="step1Heading">Buscar Cliente</h3>
+            <p class="step-card__subtitle">Pesquise por nome, placa do veículo ou celular</p>
+
+            <!-- Search -->
+            <div class="search-field" id="clientSearchWrapper">
+              <svg class="search-field__icon" aria-hidden="true">
+                <use href="../icons/icons.svg#icon-search"/>
+              </svg>
+              <input
+                type="search"
+                id="clientSearch"
+                class="search-input"
+                placeholder="Nome, placa ou celular…"
+                autocomplete="off"
+                aria-label="Buscar cliente por nome, placa ou celular"
+                aria-autocomplete="list"
+                aria-controls="clientResults"
+                aria-expanded="false"
+              >
+              <div id="clientResults" class="search-results" role="listbox" aria-label="Resultados de clientes"></div>
+            </div>
+
+            <!-- Cliente selecionado -->
+            <div id="selectedClientCard" class="client-selected u-hidden" role="status" aria-live="polite">
+              <div class="client-selected__avatar" id="selectedClientInitial" aria-hidden="true">?</div>
+              <div class="client-selected__info">
+                <div class="client-selected__name" id="selectedClientName"></div>
+                <div class="client-selected__meta" id="selectedClientMeta"></div>
+              </div>
+              <button class="client-selected__clear" id="clearClientBtn" aria-label="Remover cliente selecionado">
+                <svg aria-hidden="true"><use href="../icons/icons.svg#icon-x"/></svg>
+              </button>
+            </div>
+
+            <p class="hint-text" id="clientHint" aria-live="polite"></p>
+
+            <!-- Ações -->
+            <div class="step-actions">
+              <button class="btn btn--ghost btn--md" id="btnNovoCliente" type="button">
+                <svg aria-hidden="true" style="width:15px;height:15px">
+                  <use href="../icons/icons.svg#icon-plus"/>
+                </svg>
+                Novo Cliente
+              </button>
+              <button class="btn btn--accent btn--md" id="btnStep1Next" type="button" disabled aria-disabled="true">
+                Próximo
+                <svg aria-hidden="true" style="width:15px;height:15px">
+                  <use href="../icons/icons.svg#icon-chevron-right"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Passo 2: Itens ───────────────────────────────── -->
+        <div class="step-panel" id="step-2" role="region" aria-labelledby="step2Heading">
+          <div class="step-card">
+            <h3 class="step-card__title" id="step2Heading">Adicionar Peças</h3>
+            <p class="step-card__subtitle">Pesquise pelo código ou descrição da peça</p>
+
+            <!-- Autocomplete -->
+            <div class="search-field" id="partSearchWrapper">
+              <svg class="search-field__icon" aria-hidden="true">
+                <use href="../icons/icons.svg#icon-search"/>
+              </svg>
+              <input
+                type="search"
+                id="partSearch"
+                class="search-input"
+                placeholder="Código ou descrição da peça…"
+                autocomplete="off"
+                aria-label="Buscar peça por código ou descrição"
+                aria-autocomplete="list"
+                aria-controls="partResults"
+                aria-expanded="false"
+              >
+              <div id="partResults" class="autocomplete-results" role="listbox" aria-label="Peças disponíveis"></div>
+            </div>
+
+            <p class="hint-text">Digite ao menos 2 caracteres para buscar</p>
+
+            <!-- Lista de itens -->
+            <div id="itemsList" class="items-list" aria-label="Itens adicionados ao pedido" aria-live="polite">
+              <div class="items-list__empty" id="itemsEmpty">
+                Nenhuma peça adicionada. Use a busca acima.
+              </div>
+            </div>
+
+            <!-- Ações -->
+            <div class="step-actions">
+              <button class="btn btn--ghost btn--md" id="btnStep2Back" type="button">
+                Voltar
+              </button>
+              <button class="btn btn--accent btn--md" id="btnStep2Next" type="button">
+                Próximo
+                <svg aria-hidden="true" style="width:15px;height:15px">
+                  <use href="../icons/icons.svg#icon-chevron-right"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Passo 3: Confirmar ───────────────────────────── -->
+        <div class="step-panel" id="step-3" role="region" aria-labelledby="step3Heading">
+
+          <!-- Resumo -->
+          <div class="summary-card">
+
+            <!-- Cliente -->
+            <div class="summary-section">
+              <p class="summary-section__title">Cliente</p>
+              <div id="summaryClient" class="summary-client">
+                <div class="summary-client__avatar" id="summaryClientInitial" aria-hidden="true"></div>
+                <div>
+                  <div class="summary-client__name" id="summaryClientName"></div>
+                  <div class="summary-client__meta" id="summaryClientMeta"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Itens -->
+            <div class="summary-section">
+              <p class="summary-section__title">Peças</p>
+              <div id="summaryItems"></div>
+            </div>
+
+          </div>
+
+          <!-- Observações -->
+          <div class="field field--textarea obs-field">
+            <textarea
+              id="observacoes"
+              class="field__textarea"
+              placeholder=" "
+              rows="3"
+              aria-label="Observações do pedido"
+            ></textarea>
+            <label class="field__label" for="observacoes">Observações (opcional)</label>
+          </div>
+
+          <!-- Ações -->
+          <div class="step-actions">
+            <button class="btn btn--ghost btn--md" id="btnStep3Back" type="button">
+              Voltar
+            </button>
+            <button class="btn btn--accent btn--lg" id="btnCriarPedido" type="button">
+              Criar Pedido
+            </button>
+          </div>
+
+        </div>
+        <!-- /passo 3 -->
+
+      </div>
+      <!-- /pedido-layout -->
+
+    </div>
+  </main>
+</div>
+
+<script type="module" src="./novo-pedido.js"></script>
+</body>
+</html>
