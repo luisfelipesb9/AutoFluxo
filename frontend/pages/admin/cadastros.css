@@ -4,7 +4,16 @@
    Tudo genérico (tabela, modal, badge, btn) vem de components.css
    ============================================================ */
 
-/* Nada adicional necessário por enquanto —
-   components.css já contém table-card, action-bar,
-   tabs, badges de estoque, vehicle-expand, etc.
-   Adicione aqui apenas overrides exclusivos desta página. */
+/* Botão de remover veículo — posiciona à direita no vehicle-item */
+.vehicle-remove-btn {
+  margin-left: auto;
+  color:       var(--color-text-muted);
+  padding:     var(--space-1);
+  min-width:   unset;
+  height:      auto;
+}
+
+.vehicle-remove-btn:hover {
+  color:      var(--color-danger);
+  background: var(--color-danger-bg);
+}

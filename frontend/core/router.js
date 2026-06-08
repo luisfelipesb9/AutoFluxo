@@ -31,6 +31,12 @@ const ROUTES = [
     roles: ['vendedor', 'admin', 'caixa'],
   },
   {
+    path:  'pages/caixa.html',
+    label: 'Caixa',
+    icon:  'icon-orders',
+    roles: ['admin', 'caixa'],
+  },
+  {
     path:  'pages/estoque.html',
     label: 'Estoque',
     icon:  'icon-estoque',

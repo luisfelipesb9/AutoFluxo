@@ -193,6 +193,14 @@
   color: var(--color-accent);
 }
 
+/* Select sempre exibe texto da option → label sempre flutuada */
+.field__select ~ .field__label {
+  top:       8px;
+  transform: none;
+  font-size: var(--font-size-xs);
+  color:     var(--color-text-muted);
+}
+
 /* Affix (ícone dentro do input) */
 .field--has-suffix .field__input  { padding-right: 44px; }
 .field--has-prefix .field__input  { padding-left:  44px; }

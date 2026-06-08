@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-page="caixa">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerenciautomix — Caixa</title>
+  <link rel="stylesheet" href="../assets/design-system.css">
+  <link rel="stylesheet" href="../assets/layout.css">
+  <link rel="stylesheet" href="../assets/components.css">
+  <link rel="stylesheet" href="../assets/caixa.css">
+</head>
+<body class="app-shell">
+
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+<aside id="sidebar" class="sidebar">
+  <div class="sidebar__logo">
+    <span class="sidebar__logo-dot"></span>
+    <span class="sidebar__logo-text">GERENCIAUTOMIX</span>
+  </div>
+  <nav id="sidebarMenu" class="sidebar__nav" aria-label="Menu principal"></nav>
+</aside>
+
+<div class="main-container">
+
+  <header class="header">
+    <div class="header__left">
+      <button id="hamburger" class="hamburger" aria-label="Abrir menu" aria-expanded="false">
+        <svg aria-hidden="true"><use href="../icons/icons.svg#icon-menu"/></svg>
+      </button>
+      <h1 id="pageTitle" class="page-title">Caixa</h1>
+    </div>
+    <div class="header__search">
+      <svg class="header__search-icon" aria-hidden="true">
+        <use href="../icons/icons.svg#icon-search"/>
+      </svg>
+      <input type="search" id="globalSearch" class="header__search-input"
+             placeholder="Buscar por placa, OS ou cliente…" aria-label="Busca global">
+    </div>
+    <div class="header__actions">
+      <button class="header__notification" aria-label="Notificações">
+        <span class="notification-badge" aria-hidden="true"></span>
+        <svg aria-hidden="true"><use href="../icons/icons.svg#icon-bell"/></svg>
+      </button>
+      <div class="user-menu">
+        <button id="userMenuTrigger" class="user-menu__trigger"
+                aria-haspopup="true" aria-expanded="false" aria-controls="userDropdown">
+          <span id="headerUserName">Usuário</span>
+          <svg aria-hidden="true"><use href="../icons/icons.svg#icon-chevron-down"/></svg>
+        </button>
+        <div id="userDropdown" class="user-dropdown" role="menu">
+          <a href="#" class="user-dropdown__item">Meu Perfil</a>
+          <a href="#" class="user-dropdown__item">Configurações</a>
+          <div class="user-dropdown__divider"></div>
+          <a href="#" id="headerLogoutBtn" class="user-dropdown__item user-dropdown__item--danger">Sair</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="content__wrapper">
+
+      <div class="page-header">
+        <div>
+          <h2 class="page-header__title">Caixa</h2>
+          <p class="page-header__subtitle">Fila de pedidos aguardando pagamento</p>
+        </div>
+      </div>
+
+      <div class="caixa-layout">
+
+        <!-- Coluna Esquerda: Fila de Pedidos -->
+        <section class="caixa-queue" aria-label="Fila de pedidos">
+          <div class="caixa-queue__header">
+            <h3 class="caixa-queue__title">Fila de Pedidos</h3>
+            <span id="queueCount" class="caixa-queue__count">0 pedidos</span>
+          </div>
+          <div id="orderQueue" class="caixa-queue__list" role="list" aria-label="Pedidos abertos"></div>
+        </section>
+
+        <!-- Coluna Direita: Detalhe e Pagamento -->
+        <section class="caixa-detail" aria-label="Detalhe do pedido" aria-live="polite">
+
+          <!-- Estado vazio -->
+          <div id="detailEmpty" class="caixa-detail__empty">
+            <svg aria-hidden="true" class="caixa-detail__empty-icon">
+              <use href="../icons/icons.svg#icon-orders"/>
+            </svg>
+            <p>Selecione um pedido da fila</p>
+          </div>
+
+          <!-- Conteúdo do pedido selecionado -->
+          <div id="detailContent" class="caixa-detail__content u-hidden">
+
+            <div class="detail-client">
+              <div class="detail-client__os" id="detailOs"></div>
+              <div class="detail-client__name" id="detailClientName"></div>
+              <div class="detail-client__meta">
+                <svg aria-hidden="true"><use href="../icons/icons.svg#icon-car"/></svg>
+                <span id="detailVehicle"></span>
+              </div>
+              <div class="detail-client__meta">
+                <svg aria-hidden="true"><use href="../icons/icons.svg#icon-user"/></svg>
+                <span id="detailPhone"></span>
+              </div>
+            </div>
+
+            <div class="detail-items">
+              <table class="items-table">
+                <thead>
+                  <tr>
+                    <th>DESCRIÇÃO</th>
+                    <th>QTD</th>
+                    <th>UNIT.</th>
+                    <th>SUBTOTAL</th>
+                  </tr>
+                </thead>
+                <tbody id="detailItemsBody"></tbody>
+              </table>
+            </div>
+
+            <div class="detail-total">
+              <span class="detail-total__label">TOTAL</span>
+              <span id="detailTotal" class="detail-total__value"></span>
+            </div>
+
+            <div class="detail-payment">
+              <div class="field">
+                <select id="paymentMethod" class="field__select" aria-label="Forma de pagamento">
+                  <option value="">Selecione a forma de pagamento</option>
+                  <option value="dinheiro">Dinheiro</option>
+                  <option value="credito">Cartão Crédito</option>
+                  <option value="debito">Cartão Débito</option>
+                  <option value="pix">PIX</option>
+                </select>
+                <label class="field__label" for="paymentMethod">Forma de Pagamento</label>
+              </div>
+
+              <div id="cashFields" class="detail-cash u-hidden">
+                <div class="field">
+                  <input type="number" id="amountReceived" class="field__input"
+                         placeholder=" " min="0" step="0.01" aria-label="Valor recebido">
+                  <label class="field__label" for="amountReceived">Valor recebido (R$)</label>
+                </div>
+                <div class="detail-change">
+                  <span class="detail-change__label">Troco</span>
+                  <span id="changeAmount" class="detail-change__value">R$ 0,00</span>
+                </div>
+              </div>
+
+              <div class="detail-actions">
+                <button id="confirmPaymentBtn" class="btn btn--accent btn--lg btn--full">
+                  <svg aria-hidden="true"><use href="../icons/icons.svg#icon-check"/></svg>
+                  Confirmar Pagamento
+                </button>
+                <button id="cancelOrderBtn" class="btn btn--ghost btn--md btn--full caixa-cancel-btn">
+                  <svg aria-hidden="true"><use href="../icons/icons.svg#icon-trash"/></svg>
+                  Cancelar Pedido
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal de Cancelamento -->
+<div id="modalCancelamento" class="modal-overlay" role="dialog" aria-modal="true"
+     aria-labelledby="modalCancelTitle">
+  <div class="modal modal--sm">
+    <div class="modal__header">
+      <h3 id="modalCancelTitle" class="modal__title">Cancelar Pedido</h3>
+      <button id="modalCancelCloseX" class="modal__close" aria-label="Fechar modal">
+        <svg aria-hidden="true"><use href="../icons/icons.svg#icon-x"/></svg>
+      </button>
+    </div>
+    <div class="modal__body">
+      <p class="modal-cancel__warning">
+        Esta ação não pode ser desfeita. Descreva o motivo do cancelamento.
+      </p>
+      <div class="field field--textarea">
+        <textarea id="cancelReason" class="field__textarea" placeholder=" " rows="4"
+                  aria-label="Motivo do cancelamento"></textarea>
+        <label class="field__label" for="cancelReason">Motivo do cancelamento</label>
+      </div>
+    </div>
+    <div class="modal__footer">
+      <button id="modalCancelClose" class="btn btn--ghost btn--md">Voltar</button>
+      <button id="confirmCancelBtn" class="btn btn--danger btn--md" disabled>
+        Confirmar Cancelamento
+      </button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="./caixa.js"></script>
+</body>
+</html>

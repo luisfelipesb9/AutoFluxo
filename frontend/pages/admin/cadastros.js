@@ -31,6 +31,9 @@ let pendingDeactivateId = null;
 let debounceTimer       = null;
 let table               = null;
 
+/* ── Perfis válidos do sistema ──────────────────────────── */
+const PERFIS = ['Administrador', 'Estoque', 'Vendedor', 'Caixa', 'Montador'];
+
 /* ── Mock DB ────────────────────────────────────────────── */
 const DB = {
   usuarios: [
@@ -42,12 +45,12 @@ const DB = {
   ],
 
   pecas: [
-    { id: 1, codigo: 'PC001', nome: 'Pneu Aro 15',      estoque: 12, minimo: 5  },
-    { id: 2, codigo: 'PC002', nome: 'Bateria 60Ah',      estoque: 2,  minimo: 5  },
-    { id: 3, codigo: 'PC003', nome: 'Óleo Motor 5W30',   estoque: 8,  minimo: 10 },
-    { id: 4, codigo: 'PC004', nome: 'Pastilha de Freio', estoque: 20, minimo: 8  },
-    { id: 5, codigo: 'PC005', nome: 'Vela de Ignição',   estoque: 3,  minimo: 6  },
-    { id: 6, codigo: 'PC006', nome: 'Filtro de Ar',      estoque: 15, minimo: 4  },
+    { id: 1, codigo: 'PC001', nome: 'Pneu Aro 15',      estoque: 12, minimo: 5,  preco: 320.00 },
+    { id: 2, codigo: 'PC002', nome: 'Bateria 60Ah',      estoque: 2,  minimo: 5,  preco: 450.00 },
+    { id: 3, codigo: 'PC003', nome: 'Óleo Motor 5W30',   estoque: 8,  minimo: 10, preco: 45.90  },
+    { id: 4, codigo: 'PC004', nome: 'Pastilha de Freio', estoque: 20, minimo: 8,  preco: 89.90  },
+    { id: 5, codigo: 'PC005', nome: 'Vela de Ignição',   estoque: 3,  minimo: 6,  preco: 35.00  },
+    { id: 6, codigo: 'PC006', nome: 'Filtro de Ar',      estoque: 15, minimo: 4,  preco: 28.50  },
   ],
 
   clientes: [
@@ -57,6 +60,11 @@ const DB = {
     { id: 4, nome: 'Ana Paula',    telefone: '(38) 96666-6666', veiculos: [{ placa: 'MNO-3456', modelo: 'HB20 1.0' }] },
   ],
 };
+
+/* ── Helpers de formatação ──────────────────────────────── */
+function _fmtCurrency(value) {
+  return `R$ ${Number(value).toFixed(2).replace('.', ',')}`;
+}
 
 /* ── Colunas por tab ─────────────────────────────────────── */
 const COLUMNS = {
@@ -70,6 +78,7 @@ const COLUMNS = {
   pecas: [
     { key: 'codigo',   label: 'Código' },
     { key: 'nome',     label: 'Peça' },
+    { key: 'preco',    label: 'Preço' },
     { key: 'estoque',  label: 'Estoque' },
     { key: 'minimo',   label: 'Mínimo' },
     { key: '_situacao',label: 'Situação' },
@@ -111,6 +120,7 @@ const RENDERERS = {
     return `
       <td><code>${item.codigo}</code></td>
       <td>${item.nome}</td>
+      <td>${_fmtCurrency(item.preco)}</td>
       <td><strong>${item.estoque}</strong></td>
       <td>${item.minimo}</td>
       <td>
@@ -196,9 +206,6 @@ function _initTable(tab) {
   });
 
   table.setData(DB[tab]);
-
-  // Re-bind: após trocar tab, a injeção de rows pode criar nós novos
-  // Os handlers já estão via window._* — não precisa re-bind manual
 }
 
 /* ── Busca com debounce 300ms ────────────────────────────── */
@@ -219,7 +226,6 @@ window._toggleVehicles = function(clienteId, btn) {
   const isExpanded = btn.classList.toggle('expanded');
   btn.setAttribute('aria-expanded', String(isExpanded));
 
-  // Procura a TR filha existente ou cria
   const existingRow = document.getElementById(`vehicles-row-${clienteId}`);
 
   if (!isExpanded) {
@@ -231,10 +237,13 @@ window._toggleVehicles = function(clienteId, btn) {
   const colspan = COLUMNS.clientes.length;
 
   const vehicleHTML = cliente.veiculos.length
-    ? cliente.veiculos.map(v => `
+    ? cliente.veiculos.map((v, idx) => `
         <div class="vehicle-item">
           <svg aria-hidden="true"><use href="../../icons/icons.svg#icon-car"/></svg>
           <strong>${v.placa}</strong> — ${v.modelo}
+          <button class="btn btn--ghost btn--sm vehicle-remove-btn" onclick="window._removeVehicle(${clienteId}, ${idx})" title="Desvincular veículo">
+            <svg style="width:14px;height:14px" aria-hidden="true"><use href="../../icons/icons.svg#icon-x"/></svg>
+          </button>
         </div>`).join('')
     : `<p class="u-text-muted" style="font-size:var(--font-size-sm)">Nenhum veículo vinculado.</p>`;
 
@@ -259,6 +268,32 @@ window._addVehicle = function(clienteId) {
   showToast('Funcionalidade de adicionar veículo em desenvolvimento.', 'info');
 };
 
+/* ── Remover veículo do cliente ─────────────────────────── */
+window._removeVehicle = function(clienteId, vehicleIndex) {
+  const cliente = DB.clientes.find(c => c.id === clienteId);
+  if (!cliente) return;
+
+  const veiculo = cliente.veiculos[vehicleIndex];
+  if (!veiculo) return;
+
+  cliente.veiculos.splice(vehicleIndex, 1);
+
+  // Re-renderiza a expand row
+  const expandRow = document.getElementById(`vehicles-row-${clienteId}`);
+  if (expandRow) expandRow.remove();
+
+  const btn = document.getElementById(`expandBtn-${clienteId}`);
+  if (btn) {
+    btn.classList.remove('expanded');
+    btn.setAttribute('aria-expanded', 'false');
+  }
+
+  // Atualiza a tabela inteira (contagem de veículos muda)
+  _initTable(currentTab);
+
+  showToast(`Veículo ${veiculo.placa} desvinculado com sucesso.`, 'success');
+};
+
 /* ── Modal Criar ─────────────────────────────────────────── */
 function _openCreateModal() {
   document.getElementById('modalCadastroTitle').textContent = `Novo ${_tabLabel()}`;
@@ -281,15 +316,16 @@ function _renderFormFields(item) {
 
   const fieldDefs = {
     usuarios: [
-      { id: 'f-nome',   label: 'Nome completo', type: 'text',  value: item?.nome   || '' },
-      { id: 'f-email',  label: 'E-mail',         type: 'email', value: item?.email  || '' },
-      { id: 'f-perfil', label: 'Perfil',          type: 'text',  value: item?.perfil || '' },
+      { id: 'f-nome',   label: 'Nome completo', type: 'text',   value: item?.nome   || '' },
+      { id: 'f-email',  label: 'E-mail',         type: 'email',  value: item?.email  || '' },
+      { id: 'f-perfil', label: 'Perfil',          type: 'select', value: item?.perfil || '', options: PERFIS },
     ],
     pecas: [
-      { id: 'f-codigo',  label: 'Código',      type: 'text',   value: item?.codigo  || '' },
-      { id: 'f-nome',    label: 'Nome da peça', type: 'text',   value: item?.nome    || '' },
-      { id: 'f-estoque', label: 'Estoque atual',type: 'number', value: item?.estoque ?? '' },
-      { id: 'f-minimo',  label: 'Qtd. Mínima',  type: 'number', value: item?.minimo  ?? '' },
+      { id: 'f-codigo',  label: 'Código',        type: 'text',   value: item?.codigo  || '' },
+      { id: 'f-nome',    label: 'Nome da peça',   type: 'text',   value: item?.nome    || '' },
+      { id: 'f-preco',   label: 'Preço (R$)',      type: 'number', value: item?.preco   ?? '', step: '0.01', min: '0' },
+      { id: 'f-estoque', label: 'Estoque atual',   type: 'number', value: item?.estoque ?? '' },
+      { id: 'f-minimo',  label: 'Qtd. Mínima',     type: 'number', value: item?.minimo  ?? '' },
     ],
     clientes: [
       { id: 'f-nome',     label: 'Nome do cliente', type: 'text', value: item?.nome     || '' },
@@ -297,25 +333,40 @@ function _renderFormFields(item) {
     ],
   };
 
-  form.innerHTML = fieldDefs[currentTab].map(f => `
-    <div class="field">
-      <input
-        type="${f.type}"
-        id="${f.id}"
-        class="field__input"
-        placeholder=" "
-        value="${f.value}"
-        autocomplete="off"
-      >
-      <label class="field__label" for="${f.id}">${f.label}</label>
-    </div>
-  `).join('');
+  form.innerHTML = fieldDefs[currentTab].map(f => {
+    if (f.type === 'select') {
+      return `
+        <div class="field">
+          <select id="${f.id}" class="field__select">
+            <option value="">Selecione...</option>
+            ${f.options.map(opt => `<option value="${opt}" ${opt === f.value ? 'selected' : ''}>${opt}</option>`).join('')}
+          </select>
+          <label class="field__label" for="${f.id}">${f.label}</label>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="field">
+        <input
+          type="${f.type}"
+          id="${f.id}"
+          class="field__input"
+          placeholder=" "
+          value="${f.value}"
+          autocomplete="off"
+          ${f.step ? `step="${f.step}"` : ''}
+          ${f.min  ? `min="${f.min}"` : ''}
+        >
+        <label class="field__label" for="${f.id}">${f.label}</label>
+      </div>
+    `;
+  }).join('');
 }
 
 /* ── Salvar ──────────────────────────────────────────────── */
 window.saveCadastro = function() {
-  // Validação simples: todos os campos preenchidos
-  const inputs = document.querySelectorAll('#modalForm .field__input');
+  const inputs = document.querySelectorAll('#modalForm .field__input, #modalForm .field__select');
   let valid = true;
 
   inputs.forEach(input => {
@@ -337,13 +388,11 @@ window.saveCadastro = function() {
   btn.classList.add('btn--loading');
   btn.disabled = true;
 
-  // Simula latência de API
   setTimeout(() => {
     btn.classList.remove('btn--loading');
     btn.disabled = false;
     closeModal('modalCadastro');
     showToast(`${_tabLabel()} salvo com sucesso.`, 'success');
-    // Em produção: chamar API, atualizar DB, table.setData(novosDados)
   }, 800);
 };
 
