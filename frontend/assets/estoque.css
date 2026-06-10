@@ -1,0 +1,530 @@
+/* ============================================================
+   GERENCIAUTOMIX — ESTOQUE
+   Fila de Separação (VIEW 1) + Tela de Separação (VIEW 2)
+   Otimizado para tablet 768px horizontal, touch-friendly.
+   ============================================================ */
+
+/* ============================================================
+   VIEW 1 — Fila de Separação
+   ============================================================ */
+.estoque-queue {
+  background:     var(--color-white);
+  border:         1px solid var(--color-border);
+  border-radius:  var(--radius-lg);
+  box-shadow:     var(--shadow-xs);
+  display:        flex;
+  flex-direction: column;
+  overflow:       hidden;
+  padding:       var(--space-4) var(--space-5);
+}
+
+.estoque-queue__list {
+  padding:        var(--space-3);
+  display:        flex;
+  flex-direction: column;
+  gap:            var(--space-3);
+}
+
+.estoque-queue__empty {
+  padding:    var(--space-10) var(--space-4);
+  text-align: center;
+  color:      var(--color-text-muted);
+  font-size:  var(--font-size-sm);
+}
+
+/* ============================================================
+   Card da Fila
+   ============================================================ */
+.estoque-card {
+  background:    var(--color-white);
+  border:        1.5px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding:       var(--space-4) var(--space-5);
+  transition:    border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.estoque-card:hover {
+  border-color: var(--color-accent);
+  box-shadow:   var(--shadow-sm);
+}
+
+.estoque-card__body {
+  display:     flex;
+  align-items: center;
+  gap:         var(--space-4);
+}
+
+.estoque-card__info {
+  flex:           1;
+  display:        flex;
+  flex-direction: column;
+  gap:            var(--space-1);
+  min-width:      0;
+}
+
+.estoque-card__os {
+  font-size:      var(--font-size-xs);
+  font-weight:    var(--font-weight-semibold);
+  color:          var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.estoque-card__cliente {
+  font-size:   var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color:       var(--color-text-primary);
+  white-space: nowrap;
+  overflow:    hidden;
+  text-overflow: ellipsis;
+}
+
+.estoque-card__veiculo {
+  display:     flex;
+  align-items: center;
+  gap:         var(--space-2);
+  font-size:   var(--font-size-sm);
+  color:       var(--color-text-secondary);
+}
+
+.estoque-card__veiculo svg {
+  width:       15px;
+  height:      15px;
+  flex-shrink: 0;
+  color:       var(--color-text-muted);
+}
+
+.estoque-card__meta {
+  display:     flex;
+  align-items: center;
+  flex-wrap:   wrap;
+  gap:         var(--space-3);
+  margin-top:  var(--space-1);
+}
+
+.estoque-card__timer {
+  font-size:   var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color:       var(--color-text-muted);
+}
+
+.estoque-card__count-itens {
+  font-size:     var(--font-size-xs);
+  font-weight:   var(--font-weight-semibold);
+  color:         var(--color-text-muted);
+  background:    var(--color-surface);
+  border:        1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  padding:       2px var(--space-2);
+}
+
+.estoque-card__alerta {
+  display:       flex;
+  align-items:   center;
+  gap:           var(--space-1);
+  font-size:     var(--font-size-xs);
+  font-weight:   var(--font-weight-semibold);
+  color:         var(--color-warning-text);
+  background:    var(--color-warning-bg);
+  border:        1px solid var(--color-warning-border);
+  border-radius: var(--radius-full);
+  padding:       2px var(--space-2);
+}
+
+.estoque-card__alerta svg {
+  width:  12px;
+  height: 12px;
+}
+
+.estoque-card__action {
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   VIEW 2 — Tela de Separação
+   ============================================================ */
+.estoque-separacao {
+  display:        flex;
+  flex-direction: column;
+  height:         calc(100vh - var(--header-height) - var(--space-6) * 2);
+  min-height:     0;
+}
+
+/* Header fixo */
+.separacao-header {
+  display:       flex;
+  align-items:   center;
+  gap:           var(--space-4);
+  padding:       var(--space-4) var(--space-5);
+  background:    var(--color-white);
+  border:        1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow:    var(--shadow-xs);
+  flex-shrink:   0;
+  margin-bottom: var(--space-4);
+  flex-wrap:     wrap;
+}
+
+.separacao-header__info {
+  flex:           1;
+  display:        flex;
+  align-items:    baseline;
+  gap:            var(--space-3);
+  flex-wrap:      wrap;
+  justify-content: center;
+}
+
+.separacao-header__os {
+  font-size:      var(--font-size-xs);
+  font-weight:    var(--font-weight-semibold);
+  color:          var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.separacao-header__cliente {
+  font-size:   var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  color:       var(--color-text-primary);
+}
+
+.separacao-header__veiculo {
+  font-size:  var(--font-size-sm);
+  color:      var(--color-text-muted);
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Corpo rolável */
+.separacao-body {
+  flex:       1;
+  overflow-y: auto;
+  display:    flex;
+  flex-direction: column;
+  gap:        var(--space-3);
+  padding:    var(--space-1) 0;
+}
+
+/* Banner de alerta */
+.separacao-banner {
+  display:       flex;
+  align-items:   center;
+  gap:           var(--space-3);
+  padding:       var(--space-3) var(--space-4);
+  background:    var(--color-warning-bg);
+  border:        1px solid var(--color-warning-border);
+  border-radius: var(--radius-md);
+  color:         var(--color-warning-text);
+  font-size:     var(--font-size-sm);
+  font-weight:   var(--font-weight-medium);
+  line-height:   var(--line-height-relaxed);
+}
+
+.separacao-banner svg {
+  width:       18px;
+  height:      18px;
+  flex-shrink: 0;
+}
+
+/* Lista de itens */
+.separacao-itens {
+  display:        flex;
+  flex-direction: column;
+  gap:            var(--space-2);
+}
+
+/* ============================================================
+   Item Row
+   ============================================================ */
+.separacao-item {
+  display:       flex;
+  align-items:   center;
+  gap:           var(--space-4);
+  padding:       var(--space-3) var(--space-4);
+  background:    var(--color-white);
+  border:        1.5px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  transition:    background var(--transition-base), border-color var(--transition-base);
+  flex-wrap:     wrap;
+}
+
+.separacao-item--confirmado {
+  background:   var(--color-success-bg);
+  border-color: var(--color-success-border);
+}
+
+/* Checkbox custom */
+.separacao-item__check-wrap {
+  flex-shrink: 0;
+  cursor:      pointer;
+  position:    relative;
+  width:       40px;
+  height:      40px;
+  display:     flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.separacao-item__checkbox {
+  position: absolute;
+  opacity:  0;
+  width:    0;
+  height:   0;
+}
+
+.separacao-item__check-custom {
+  width:         40px;
+  height:        40px;
+  min-width:     40px;
+  border:        2px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background:    var(--color-white);
+  display:       flex;
+  align-items:   center;
+  justify-content: center;
+  transition:    border-color var(--transition-base),
+                 background   var(--transition-base);
+}
+
+.separacao-item__check-custom svg {
+  width:      20px;
+  height:     20px;
+  color:      var(--color-white);
+  opacity:    0;
+  transition: opacity var(--transition-fast);
+}
+
+.separacao-item__checkbox:checked ~ .separacao-item__check-custom {
+  background:   var(--color-success);
+  border-color: var(--color-success);
+}
+
+.separacao-item__checkbox:checked ~ .separacao-item__check-custom svg {
+  opacity: 1;
+}
+
+.separacao-item__check-wrap:hover .separacao-item__check-custom {
+  border-color: var(--color-accent);
+}
+
+.separacao-item__checkbox:focus-visible ~ .separacao-item__check-custom {
+  outline:        2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Detalhes do item */
+.separacao-item__details {
+  flex:           1;
+  display:        flex;
+  flex-direction: column;
+  gap:            var(--space-1);
+  min-width:      120px;
+}
+
+.separacao-item__codigo {
+  font-family:    monospace;
+  font-size:      var(--font-size-xs);
+  color:          var(--color-text-muted);
+  letter-spacing: 0.5px;
+}
+
+.separacao-item__descricao {
+  font-size:   var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color:       var(--color-text-primary);
+}
+
+/* Blocos de quantidade */
+.separacao-item__qtd-bloco,
+.separacao-item__estoque-bloco,
+.separacao-item__confirm-bloco {
+  display:        flex;
+  flex-direction: column;
+  align-items:    center;
+  gap:            var(--space-1);
+  flex-shrink:    0;
+}
+
+.separacao-item__qtd-label {
+  font-size:      var(--font-size-xs);
+  font-weight:    var(--font-weight-semibold);
+  color:          var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space:    nowrap;
+}
+
+.separacao-item__qtd-valor {
+  font-size:   var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  color:       var(--color-text-primary);
+  min-width:   32px;
+  text-align:  center;
+}
+
+.separacao-item__estoque-valor {
+  font-size:   var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  color:       var(--color-text-secondary);
+  min-width:   32px;
+  text-align:  center;
+}
+
+.separacao-item__estoque--critico {
+  color: var(--color-danger-text);
+}
+
+/* Linha de código + ícone de bloqueio */
+.separacao-item__codigo-row {
+  display:     flex;
+  align-items: center;
+  gap:         var(--space-1);
+}
+
+.separacao-item__blocked-icon {
+  display:     inline-flex;
+  align-items: center;
+  color:       var(--color-danger);
+}
+
+.separacao-item__blocked-icon svg {
+  width:  14px;
+  height: 14px;
+}
+
+/* Row bloqueada por estoque insuficiente */
+.separacao-item--blocked {
+  background:   var(--color-danger-bg);
+  border-color: var(--color-danger-border);
+}
+
+.separacao-item--blocked .separacao-item__check-wrap {
+  cursor: not-allowed;
+}
+
+/* Input de quantidade confirmada */
+.separacao-item__confirm-input {
+  width:         72px;
+  height:        44px;
+  text-align:    center;
+  font-size:     16px;
+  font-weight:   var(--font-weight-semibold);
+  font-family:   var(--font-family-base);
+  color:         var(--color-text-primary);
+  background:    var(--color-white);
+  border:        1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  outline:       none;
+  transition:    border-color var(--transition-base);
+  -webkit-appearance: none;
+  -moz-appearance:    textfield;
+}
+
+.separacao-item__confirm-input::-webkit-outer-spin-button,
+.separacao-item__confirm-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.separacao-item__confirm-input:focus {
+  border-color: var(--color-accent);
+}
+
+.separacao-item__confirm-input:disabled {
+  background:   var(--color-surface);
+  color:        var(--color-text-disabled);
+  cursor:       not-allowed;
+  border-color: var(--color-border);
+}
+
+.separacao-item__confirm-input--error {
+  border-color: var(--color-danger) !important;
+  color:        var(--color-danger-text);
+}
+
+/* ============================================================
+   Rodapé sticky da VIEW 2
+   ============================================================ */
+.separacao-footer {
+  flex-shrink: 0;
+  display:     flex;
+  gap:         var(--space-3);
+  padding:     var(--space-4) 0 var(--space-2);
+  border-top:  1px solid var(--color-border);
+  margin-top:  var(--space-3);
+}
+
+#btnDevolverCaixa  { flex: 0 0 35%; }
+#btnEnviarMontagem { flex: 1; }
+
+/* Botão ghost com cor de perigo */
+.btn--ghost-danger {
+  background:   transparent;
+  color:        var(--color-danger-text);
+  border-color: var(--color-danger-border);
+}
+
+.btn--ghost-danger:hover {
+  background:   var(--color-danger-bg);
+  border-color: var(--color-danger);
+}
+
+/* ============================================================
+   Responsivo — tablet 768px (layout já pensado para ele)
+   Ajustes apenas para mobile menor
+   ============================================================ */
+@media (max-width: 600px) {
+  .estoque-card__body {
+    flex-direction: column;
+    align-items:    flex-start;
+    gap:            var(--space-3);
+  }
+
+  .estoque-card__action {
+    align-self: stretch;
+  }
+
+  .estoque-card__action .btn {
+    width: 100%;
+  }
+
+  .separacao-header {
+    flex-direction: column;
+    align-items:    flex-start;
+    gap:            var(--space-2);
+  }
+
+  .separacao-header__info {
+    justify-content: flex-start;
+  }
+
+  .separacao-header__veiculo {
+    text-align: left;
+  }
+
+  .separacao-item {
+    flex-wrap: wrap;
+    row-gap:   var(--space-3);
+  }
+
+  .separacao-item__details {
+    min-width: 0;
+    width:     100%;
+  }
+
+  .separacao-item__qtd-bloco,
+  .separacao-item__estoque-bloco,
+  .separacao-item__confirm-bloco {
+    flex: 1;
+  }
+
+  .separacao-footer {
+    flex-direction: column-reverse;
+  }
+
+  #btnDevolverCaixa,
+  #btnEnviarMontagem {
+    flex: unset;
+    width: 100%;
+  }
+}

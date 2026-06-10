@@ -7,10 +7,12 @@
   <link rel="stylesheet" href="../assets/design-system.css">
   <link rel="stylesheet" href="../assets/layout.css">
   <link rel="stylesheet" href="../assets/components.css">
+  <link rel="stylesheet" href="../assets/estoque.css">
 </head>
 <body class="app-shell">
 
 <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
 <aside id="sidebar" class="sidebar">
   <div class="sidebar__logo">
     <span class="sidebar__logo-dot"></span>
@@ -20,29 +22,35 @@
 </aside>
 
 <div class="main-container">
+
   <header class="header">
     <div class="header__left">
       <button id="hamburger" class="hamburger" aria-label="Abrir menu" aria-expanded="false">
         <svg aria-hidden="true"><use href="../icons/icons.svg#icon-menu"/></svg>
       </button>
-      <h1 id="pageTitle" class="page-title"></h1>
+      <h1 id="pageTitle" class="page-title">Estoque</h1>
     </div>
     <div class="header__search">
-      <svg class="header__search-icon" aria-hidden="true"><use href="../icons/icons.svg#icon-search"/></svg>
-      <input type="search" class="header__search-input" placeholder="Buscar por placa, NF ou celular..." aria-label="Busca global">
+      <svg class="header__search-icon" aria-hidden="true">
+        <use href="../icons/icons.svg#icon-search"/>
+      </svg>
+      <input type="search" id="globalSearch" class="header__search-input"
+             placeholder="Buscar por placa, OS ou cliente…" aria-label="Busca global">
     </div>
     <div class="header__actions">
-      <button class="header__notification" aria-label="Notificacoes">
+      <button class="header__notification" aria-label="Notificações">
         <span class="notification-badge" aria-hidden="true"></span>
         <svg aria-hidden="true"><use href="../icons/icons.svg#icon-bell"/></svg>
       </button>
       <div class="user-menu">
-        <button id="userMenuTrigger" class="user-menu__trigger" aria-haspopup="true" aria-expanded="false" aria-controls="userDropdown">
-          <span id="headerUserName">Usuario</span>
+        <button id="userMenuTrigger" class="user-menu__trigger"
+                aria-haspopup="true" aria-expanded="false" aria-controls="userDropdown">
+          <span id="headerUserName">Usuário</span>
           <svg aria-hidden="true"><use href="../icons/icons.svg#icon-chevron-down"/></svg>
         </button>
         <div id="userDropdown" class="user-dropdown" role="menu">
           <a href="#" class="user-dropdown__item">Meu Perfil</a>
+          <a href="#" class="user-dropdown__item">Configurações</a>
           <div class="user-dropdown__divider"></div>
           <a href="#" id="headerLogoutBtn" class="user-dropdown__item user-dropdown__item--danger">Sair</a>
         </div>
@@ -52,25 +60,105 @@
 
   <main class="content">
     <div class="content__wrapper">
-      <div class="page-header">
-        <div>
-          <h2 class="page-header__title">Estoque</h2>
-          <p class="page-header__subtitle">Esta secao sera implementada na proxima sprint.</p>
+
+      <!-- ===================================================
+           VIEW 1 — Fila de Separação
+           =================================================== -->
+      <div id="viewFila">
+
+        <div class="page-header">
+          <div>
+            <h2 class="page-header__title">Estoque</h2>
+            <p class="page-header__subtitle">Fila de pedidos aguardando separação de peças</p>
+          </div>
         </div>
+
+        <section class="estoque-queue" aria-label="Fila de separação">
+          <div class="caixa-queue__header">
+            <h3 class="caixa-queue__title">Fila de Separação</h3>
+            <span id="queueCount" class="caixa-queue__count">0 pedidos</span>
+          </div>
+          <div id="separacaoQueue" class="estoque-queue__list" role="list"
+               aria-label="Pedidos aguardando separação"></div>
+        </section>
+
       </div>
-      <div class="card" style="padding:var(--space-12);text-align:center;color:var(--color-text-muted)">
-        <p style="font-size:var(--font-size-lg);font-weight:var(--font-weight-bold);margin-bottom:var(--space-2)">Sprint em andamento</p>
-        <p style="font-size:var(--font-size-sm)">Modulo de <strong>Estoque</strong> sera entregue na proxima sprint conforme cronograma.</p>
+
+      <!-- ===================================================
+           VIEW 2 — Tela de Separação
+           =================================================== -->
+      <div id="viewSeparacao" class="u-hidden estoque-separacao">
+
+        <!-- Header fixo da view 2 -->
+        <div class="separacao-header">
+          <button id="btnVoltar" class="btn btn--ghost btn--sm" aria-label="Voltar para fila">
+            <svg aria-hidden="true" style="transform:rotate(180deg)"><use href="../icons/icons.svg#icon-chevron-right"/></svg>
+            Voltar
+          </button>
+          <div class="separacao-header__info">
+            <span id="separacaoOs" class="separacao-header__os"></span>
+            <span id="separacaoCliente" class="separacao-header__cliente"></span>
+          </div>
+          <div id="separacaoVeiculo" class="separacao-header__veiculo"></div>
+        </div>
+
+        <!-- Corpo rolável -->
+        <div class="separacao-body">
+
+          <!-- Banner de alerta de estoque crítico -->
+          <div id="bannerEstoque" class="separacao-banner u-hidden" role="alert">
+            <svg aria-hidden="true"><use href="../icons/icons.svg#icon-alert"/></svg>
+            <span>Atenção: um ou mais itens com estoque insuficiente. Confirme a quantidade disponível.</span>
+          </div>
+
+          <!-- Lista de itens -->
+          <div id="separacaoItens" class="separacao-itens" role="list"
+               aria-label="Itens para separação"></div>
+
+        </div>
+
+        <!-- Rodapé sticky -->
+        <div class="separacao-footer">
+          <button id="btnDevolverCaixa" class="btn btn--ghost-danger btn--lg">
+            <svg aria-hidden="true" style="transform:rotate(180deg)"><use href="../icons/icons.svg#icon-chevron-right"/></svg>
+            Devolver ao Caixa
+          </button>
+          <button id="btnEnviarMontagem" class="btn btn--accent btn--lg" disabled>
+            <svg aria-hidden="true"><use href="../icons/icons.svg#icon-check"/></svg>
+            Enviar para Montagem
+          </button>
+        </div>
+
       </div>
+
     </div>
   </main>
 </div>
 
-<script type="module">
-  import { requireAuth } from '../core/auth.js';
-  import { initLayout }  from '../components/layout.js';
-  requireAuth('../login.html');
-  document.addEventListener('DOMContentLoaded', () => initLayout({ pageTitle: 'Estoque' }));
-</script>
+<div id="modalDevolucao" class="modal-overlay" aria-modal="true" role="dialog" aria-labelledby="modalDevolucaoTitle">
+  <div class="modal">
+    <div class="modal__header">
+      <h2 id="modalDevolucaoTitle" class="modal__title">Devolver ao Caixa</h2>
+      <button class="modal__close" onclick="window._fecharDevolucao()" aria-label="Fechar">
+        <svg aria-hidden="true"><use href="../icons/icons.svg#icon-x"/></svg>
+      </button>
+    </div>
+    <div class="modal__body">
+      <p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);line-height:var(--line-height-base);margin-bottom:var(--space-4)">
+        Informe o motivo da devolução. O pedido será devolvido ao caixa para revisão.
+      </p>
+      <div class="field field--textarea">
+        <textarea id="motivoDevolucao" class="field__textarea" placeholder=" " rows="3" oninput="window._validarMotivoDevolucao()"></textarea>
+        <label class="field__label" for="motivoDevolucao">Motivo da devolução</label>
+      </div>
+    </div>
+    <div class="modal__footer">
+      <button type="button" class="btn btn--ghost btn--md" onclick="window._fecharDevolucao()">Voltar</button>
+      <button type="button" class="btn btn--danger btn--md" id="btnConfirmarDevolucao" onclick="window._confirmarDevolucao()" disabled>Confirmar Devolução</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="./estoque.js"></script>
 </body>
 </html>

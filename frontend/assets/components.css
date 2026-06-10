@@ -84,6 +84,7 @@
   border-color: transparent;
 }
 .btn--icon:hover { background: var(--color-surface); color: var(--color-text-primary); }
+.btn svg         { width: 16px; height: 16px; flex-shrink: 0; }
 .btn--icon svg   { width: 18px; height: 18px; }
 
 /* Loading — spinner sem alterar dimensões */
