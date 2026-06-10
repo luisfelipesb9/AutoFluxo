@@ -20,7 +20,7 @@ export class RefreshToken {
   @JoinColumn({ name: "user_id" })
   user!: User;
 
-  @Column()
+  @Column({ name: "user_id" })
   userId!: number;
 
   @Column()

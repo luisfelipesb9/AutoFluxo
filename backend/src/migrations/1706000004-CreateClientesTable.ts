@@ -1,10 +1,10 @@
 import { MigrationInterface, QueryRunner, Table } from "typeorm";
 
-export class CreateUsersTable1706000001000 implements MigrationInterface {
+export class CreateClientesTable1706000004000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.createTable(
       new Table({
-        name: "usuarios",
+        name: "clientes",
         columns: [
           {
             name: "id",
@@ -20,23 +20,9 @@ export class CreateUsersTable1706000001000 implements MigrationInterface {
             isNullable: false,
           },
           {
-            name: "login",
+            name: "telefone",
             type: "varchar",
-            length: "50",
-            isUnique: true,
-            isNullable: false,
-          },
-          {
-            name: "senhaHash",
-            type: "varchar",
-            length: "255",
-            isNullable: false,
-          },
-          {
-            name: "perfil",
-            type: "varchar",
-            length: "50",
-            default: "'USER'",
+            length: "30",
             isNullable: false,
           },
           {
@@ -46,13 +32,13 @@ export class CreateUsersTable1706000001000 implements MigrationInterface {
             isNullable: false,
           },
           {
-            name: "criadoEm",
+            name: "criado_em",
             type: "timestamp",
             default: "now()",
             isNullable: false,
           },
           {
-            name: "atualizadoEm",
+            name: "atualizado_em",
             type: "timestamp",
             default: "now()",
             isNullable: false,
@@ -61,9 +47,14 @@ export class CreateUsersTable1706000001000 implements MigrationInterface {
       }),
       true
     );
+
+    await queryRunner.query("CREATE INDEX idx_clientes_nome ON clientes(nome)");
+    await queryRunner.query(
+      "CREATE INDEX idx_clientes_telefone ON clientes(telefone)"
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.dropTable("usuarios");
+    await queryRunner.dropTable("clientes");
   }
 }

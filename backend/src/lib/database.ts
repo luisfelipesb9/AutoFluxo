@@ -1,7 +1,16 @@
+import "reflect-metadata";
 import { DataSource } from "typeorm";
 import logger from "../lib/logger";
 import { User } from "../entities/User";
 import { RefreshToken } from "../entities/RefreshToken";
+import { Cliente } from "../entities/Cliente";
+import { Veiculo } from "../entities/Veiculo";
+import { Peca } from "../entities/Peca";
+import { Pedido } from "../entities/Pedido";
+import { ItemPedido } from "../entities/ItemPedido";
+import { Pagamento } from "../entities/Pagamento";
+import { MovimentacaoEstoque } from "../entities/MovimentacaoEstoque";
+import { LogAcao } from "../entities/LogAcao";
 
 export const AppDataSource = new DataSource({
   type: "postgres",
@@ -12,8 +21,19 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_NAME,
   synchronize: false,
   logging: process.env.NODE_ENV === "development",
-  entities: [User, RefreshToken],
-  migrations: ["dist/backend/src/migrations/**/*.js"],
+  entities: [
+    User,
+    RefreshToken,
+    Cliente,
+    Veiculo,
+    Peca,
+    Pedido,
+    ItemPedido,
+    Pagamento,
+    MovimentacaoEstoque,
+    LogAcao,
+  ],
+  migrations: [__dirname + "/../migrations/*.{ts,js}"],
   subscribers: [],
 });
 

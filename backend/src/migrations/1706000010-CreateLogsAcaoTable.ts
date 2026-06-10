@@ -1,10 +1,10 @@
 import { MigrationInterface, QueryRunner, Table, TableForeignKey } from "typeorm";
 
-export class CreateRefreshTokensTable1706000002000 implements MigrationInterface {
+export class CreateLogsAcaoTable1706000010000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.createTable(
       new Table({
-        name: "refresh_tokens",
+        name: "logs_acao",
         columns: [
           {
             name: "id",
@@ -14,29 +14,34 @@ export class CreateRefreshTokensTable1706000002000 implements MigrationInterface
             generationStrategy: "increment",
           },
           {
-            name: "token",
-            type: "varchar",
-            length: "255",
-            isUnique: true,
-            isNullable: false,
-          },
-          {
-            name: "user_id",
+            name: "usuario_id",
             type: "int",
-            isNullable: false,
-          },
-          {
-            name: "expiresAt",
-            type: "timestamp",
-            isNullable: false,
-          },
-          {
-            name: "revokedAt",
-            type: "timestamp",
             isNullable: true,
           },
           {
-            name: "criadoEm",
+            name: "acao",
+            type: "varchar",
+            length: "100",
+            isNullable: false,
+          },
+          {
+            name: "entidade",
+            type: "varchar",
+            length: "100",
+            isNullable: false,
+          },
+          {
+            name: "entidade_id",
+            type: "int",
+            isNullable: true,
+          },
+          {
+            name: "detalhe",
+            type: "text",
+            isNullable: true,
+          },
+          {
+            name: "criado_em",
             type: "timestamp",
             default: "now()",
             isNullable: false,
@@ -47,24 +52,24 @@ export class CreateRefreshTokensTable1706000002000 implements MigrationInterface
     );
 
     await queryRunner.createForeignKey(
-      "refresh_tokens",
+      "logs_acao",
       new TableForeignKey({
-        columnNames: ["user_id"],
+        columnNames: ["usuario_id"],
         referencedColumnNames: ["id"],
         referencedTableName: "usuarios",
-        onDelete: "CASCADE",
+        onDelete: "SET NULL",
       })
     );
 
     await queryRunner.query(
-      'CREATE INDEX idx_refresh_tokens_user_id ON refresh_tokens(user_id)'
+      "CREATE INDEX idx_logs_acao_usuario_id ON logs_acao(usuario_id)"
     );
     await queryRunner.query(
-      'CREATE INDEX idx_refresh_tokens_expires_at ON refresh_tokens("expiresAt")'
+      "CREATE INDEX idx_logs_acao_entidade ON logs_acao(entidade, entidade_id)"
     );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.dropTable("refresh_tokens");
+    await queryRunner.dropTable("logs_acao");
   }
 }
