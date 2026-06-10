@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { LessThan } from "typeorm";
 import { AppDataSource } from "../lib/database";
 import { RefreshToken } from "../entities/RefreshToken";
 import logger from "../lib/logger";
@@ -73,8 +74,11 @@ export const revokeRefreshToken = async (token: string): Promise<boolean> => {
 export const cleanupExpiredTokens = async (): Promise<void> => {
   try {
     const tokenRepository = AppDataSource.getRepository(RefreshToken);
+    // Remove todos os tokens cujo expiresAt já passou (não apenas o instante
+    // exato de agora). Tokens revogados mantêm o expiresAt original, então
+    // também são removidos aqui quando seu TTL de 7 dias expira.
     await tokenRepository.delete({
-      expiresAt: new Date(),
+      expiresAt: LessThan(new Date()),
     });
     logger.info("Cleanup expired refresh tokens completed");
   } catch (error) {
