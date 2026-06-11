@@ -1,8 +1,9 @@
 import { buscarPorLinguagemNatural } from "../../../services/searchService";
-import { AppDataSource } from "../../../lib/database";
+import { getReadOnlyDataSource } from "../../../lib/readonlyDatabase";
+import { AppError } from "../../../lib/AppError";
 
-jest.mock("../../../lib/database", () => ({
-  AppDataSource: { transaction: jest.fn() },
+jest.mock("../../../lib/readonlyDatabase", () => ({
+  getReadOnlyDataSource: jest.fn(),
 }));
 jest.mock("../../../services/logService", () => ({
   registrarLog: jest.fn().mockResolvedValue(undefined),
@@ -17,13 +18,19 @@ const openAiOk = (sql: string) => ({
 });
 
 describe("searchService.buscarPorLinguagemNatural", () => {
+  let mockTransaction: jest.Mock;
+
   beforeEach(() => {
     jest.clearAllMocks();
     process.env.OPENAI_API_KEY = "sk-test";
-    (AppDataSource.transaction as jest.Mock).mockImplementation(
+    // Simula a transação da DataSource read-only resolvendo a query do SQL.
+    mockTransaction = jest.fn().mockImplementation(
       async (cb: (m: { query: jest.Mock }) => unknown) =>
         cb({ query: jest.fn().mockResolvedValue([{ n: 1 }]) })
     );
+    (getReadOnlyDataSource as jest.Mock).mockResolvedValue({
+      transaction: mockTransaction,
+    });
   });
 
   it("lança 503 quando OPENAI_API_KEY está ausente", async () => {
@@ -32,6 +39,19 @@ describe("searchService.buscarPorLinguagemNatural", () => {
     await expect(buscarPorLinguagemNatural("x")).rejects.toMatchObject({
       statusCode: 503,
     });
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("lança 503 (fail-closed) quando a infra read-only está indisponível", async () => {
+    (getReadOnlyDataSource as jest.Mock).mockRejectedValue(
+      new AppError(503, "Busca por IA indisponível no momento.")
+    );
+    mockFetch.mockResolvedValue(openAiOk("SELECT 1"));
+
+    await expect(buscarPorLinguagemNatural("x")).rejects.toMatchObject({
+      statusCode: 503,
+    });
+    // Falha antes de gastar a chamada à OpenAI.
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
@@ -58,7 +78,7 @@ describe("searchService.buscarPorLinguagemNatural", () => {
     await expect(buscarPorLinguagemNatural("apaga tudo")).rejects.toMatchObject({
       statusCode: 400,
     });
-    expect(AppDataSource.transaction).not.toHaveBeenCalled();
+    expect(mockTransaction).not.toHaveBeenCalled();
   });
 
   it("lança 503 quando a OpenAI responde com erro HTTP", async () => {
@@ -79,12 +99,22 @@ describe("searchService.buscarPorLinguagemNatural", () => {
 
   it("lança 400 quando a execução do SQL falha no banco", async () => {
     mockFetch.mockResolvedValue(openAiOk("SELECT * FROM inexistente"));
-    (AppDataSource.transaction as jest.Mock).mockRejectedValue(
-      new Error("relation does not exist")
+    mockTransaction.mockRejectedValue(new Error("relation does not exist"));
+
+    await expect(buscarPorLinguagemNatural("x")).rejects.toMatchObject({
+      statusCode: 400,
+    });
+  });
+
+  it("traduz estouro de statement_timeout em 400 com mensagem de tempo limite", async () => {
+    mockFetch.mockResolvedValue(openAiOk("SELECT * FROM pedidos"));
+    mockTransaction.mockRejectedValue(
+      new Error("canceling statement due to statement timeout")
     );
 
     await expect(buscarPorLinguagemNatural("x")).rejects.toMatchObject({
       statusCode: 400,
+      message: "A consulta gerada excedeu o tempo limite.",
     });
   });
 });

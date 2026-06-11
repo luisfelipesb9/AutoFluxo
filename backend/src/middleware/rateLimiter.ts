@@ -16,3 +16,14 @@ export const apiLimiter = rateLimit({
   legacyHeaders: false,
   skip: (_req) => process.env.NODE_ENV === "test",
 });
+
+// Endpoint sensível: cada busca gera/executa SQL dinâmico via OpenAI (caro e
+// potencialmente custoso no banco). Limite dedicado, mais restrito que o geral.
+export const searchLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minuto
+  max: 10, // 10 buscas por IP
+  message: "Muitas buscas em sequência. Aguarde um momento.",
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (_req) => process.env.NODE_ENV === "test",
+});
