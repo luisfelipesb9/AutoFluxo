@@ -2,6 +2,7 @@ import { requireAuth, getUser }                    from '../core/auth.js';
 import { initLayout }                              from '../components/layout.js';
 import { openModal, closeModal, initModals }       from '../components/modal.js';
 import { showToast }                               from '../components/toast.js';
+import { api, ApiError }                           from '../core/api.js';
 
 requireAuth('../login.html');
 
@@ -11,95 +12,71 @@ if (_u && !['admin', 'caixa'].includes(_u.role)) {
 }
 
 // ---------------------------------------------------------------------------
-// Mock data
+// Estado
 // ---------------------------------------------------------------------------
-const _now = Date.now();
-
-/** @type {Array<{id:string, os:string, cliente:{nome:string, telefone:string}, veiculo:{modelo:string, placa:string, ano:number}, itens:Array<{descricao:string, qtd:number, valorUnitario:number}>, criadoEm:Date, status:string}>} */
-const mockOrders = [
-  {
-    id: '1',
-    os: 'OS-2401',
-    cliente:  { nome: 'João Silva',          telefone: '(11) 99123-4567' },
-    veiculo:  { modelo: 'Honda Civic',        placa: 'ABC-1234', ano: 2021 },
-    itens: [
-      { descricao: 'Para-brisa dianteiro', qtd: 1, valorUnitario: 450.00 },
-      { descricao: 'Película solar',        qtd: 1, valorUnitario: 280.00 },
-    ],
-    criadoEm: new Date(_now - 75 * 60 * 1000),
-    status: 'aberto',
-  },
-  {
-    id: '2',
-    os: 'OS-2402',
-    cliente:  { nome: 'Maria Souza',          telefone: '(11) 98765-4321' },
-    veiculo:  { modelo: 'Toyota Corolla',     placa: 'QWE-5678', ano: 2022 },
-    itens: [
-      { descricao: 'Vidro traseiro', qtd: 1, valorUnitario: 380.00 },
-      { descricao: 'Mão de obra',    qtd: 1, valorUnitario:  80.00 },
-    ],
-    criadoEm: new Date(_now - 45 * 60 * 1000),
-    status: 'aberto',
-  },
-  {
-    id: '3',
-    os: 'OS-2403',
-    cliente:  { nome: 'Carlos Lima',          telefone: '(21) 97654-3210' },
-    veiculo:  { modelo: 'VW Gol',             placa: 'MNO-9012', ano: 2019 },
-    itens: [
-      { descricao: 'Para-brisa dianteiro', qtd: 1, valorUnitario: 320.00 },
-      { descricao: 'Borracha de vedação',  qtd: 2, valorUnitario:  45.00 },
-    ],
-    criadoEm: new Date(_now - 25 * 60 * 1000),
-    status: 'aberto',
-  },
-  {
-    id: '4',
-    os: 'OS-2404',
-    cliente:  { nome: 'Ana Paula Ferreira',   telefone: '(11) 96543-2109' },
-    veiculo:  { modelo: 'Fiat Uno',           placa: 'XYZ-3456', ano: 2018 },
-    itens: [
-      { descricao: 'Vidro lateral esquerdo', qtd: 1, valorUnitario: 210.00 },
-      { descricao: 'Mão de obra',             qtd: 1, valorUnitario:  80.00 },
-    ],
-    criadoEm: new Date(_now - 15 * 60 * 1000),
-    status: 'aberto',
-  },
-  {
-    id: '5',
-    os: 'OS-2405',
-    cliente:  { nome: 'Ricardo Braga',        telefone: '(31) 95432-1098' },
-    veiculo:  { modelo: 'Chevrolet Onix',     placa: 'DEF-7890', ano: 2023 },
-    itens: [
-      { descricao: 'Para-brisa panorâmico', qtd: 1, valorUnitario: 890.00 },
-      { descricao: 'Película security',      qtd: 1, valorUnitario: 350.00 },
-      { descricao: 'Mão de obra',            qtd: 1, valorUnitario: 120.00 },
-    ],
-    criadoEm: new Date(_now - 8 * 60 * 1000),
-    status: 'aberto',
-  },
-  {
-    id: '6',
-    os: 'OS-2406',
-    cliente:  { nome: 'Fernanda Costa',       telefone: '(41) 94321-0987' },
-    veiculo:  { modelo: 'Jeep Renegade',      placa: 'GHI-2345', ano: 2020 },
-    itens: [
-      { descricao: 'Teto solar — vedação', qtd: 1, valorUnitario: 520.00 },
-      { descricao: 'Borracha lateral',      qtd: 4, valorUnitario:  35.00 },
-    ],
-    criadoEm: new Date(_now - 3 * 60 * 1000),
-    status: 'aberto',
-  },
-];
-
-let orders          = [...mockOrders];
+let orders          = [];
 let selectedOrderId = null;
+
+// ---------------------------------------------------------------------------
+// API — carrega a fila de pedidos abertos e adapta ao formato da tela
+// ---------------------------------------------------------------------------
+/**
+ * Adapta um pedido vindo da API (snake_case, relações aninhadas) ao formato
+ * consumido pelas funções de render desta tela.
+ * @param {any} p pedido cru da API
+ */
+function adaptOrder(p) {
+  return {
+    id:  String(p.id),               // string: alinha com dataset.orderId nas comparações
+    os:  p.os,
+    cliente: {
+      nome:     p.cliente?.nome     ?? '—',
+      telefone: p.cliente?.telefone ?? '—',
+    },
+    veiculo: p.veiculo
+      ? { modelo: p.veiculo.modelo ?? '—', placa: p.veiculo.placa ?? '—', ano: p.veiculo.ano ?? null }
+      : null,
+    itens: (p.itens ?? []).map(i => ({
+      descricao:     i.peca?.nome ?? `Peça ${i.peca_id}`,
+      qtd:           i.qtd,
+      valorUnitario: Number(i.preco_unitario) || 0,
+    })),
+    total:    Number(p.total) || 0,
+    criadoEm: new Date(p.criado_em),
+    status:   p.status,
+  };
+}
+
+/** Busca os pedidos abertos na API e re-renderiza a fila. */
+async function fetchOrders() {
+  const queue = document.getElementById('orderQueue');
+  try {
+    const data = await api.get('/pedidos?status=aberto');
+    orders = (data || []).map(adaptOrder);
+  } catch (err) {
+    console.error('[caixa] falha ao carregar pedidos:', err);
+    // Só mostra erro no lugar da fila se ainda não havia nada carregado.
+    if (!orders.length) {
+      queue.innerHTML = `<p class="queue-empty">${err instanceof ApiError ? err.message : 'Erro ao carregar pedidos.'}</p>`;
+      document.getElementById('queueCount').textContent = '—';
+    }
+    return;
+  }
+
+  // Se o pedido selecionado saiu da fila (pago/cancelado em outro caixa), limpa o detalhe.
+  if (selectedOrderId && !orders.some(o => o.id === selectedOrderId)) {
+    clearDetail();
+  }
+
+  renderQueue();
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 function elapsedMinutes(date) {
-  return Math.floor((Date.now() - date.getTime()) / 60_000);
+  // clamp em 0: evita "há -X min" por pequeno skew de relógio servidor/cliente.
+  return Math.max(0, Math.floor((Date.now() - date.getTime()) / 60_000));
 }
 
 function formatTimer(date) {
@@ -111,6 +88,8 @@ function formatTimer(date) {
 }
 
 function calcTotal(order) {
+  // A API já devolve o total calculado; só soma os itens como fallback.
+  if (typeof order.total === 'number' && !Number.isNaN(order.total)) return order.total;
   return order.itens.reduce((s, i) => s + i.qtd * i.valorUnitario, 0);
 }
 
@@ -158,7 +137,7 @@ function buildCard(order) {
     <div class="order-card__client">${order.cliente.nome}</div>
     <div class="order-card__vehicle">
       <svg aria-hidden="true"><use href="../icons/icons.svg#icon-car"/></svg>
-      <span>${order.veiculo.modelo} · ${order.veiculo.placa}</span>
+      <span>${order.veiculo ? `${order.veiculo.modelo} · ${order.veiculo.placa}` : 'Sem veículo'}</span>
     </div>
     ${urgent ? `
     <div class="order-card__urgent-badge">
@@ -188,8 +167,10 @@ function selectOrder(id) {
 
   document.getElementById('detailOs').textContent         = order.os;
   document.getElementById('detailClientName').textContent = order.cliente.nome;
-  document.getElementById('detailVehicle').textContent    =
-    `${order.veiculo.modelo} · ${order.veiculo.placa} · ${order.veiculo.ano}`;
+  const v = order.veiculo;
+  document.getElementById('detailVehicle').textContent    = v
+    ? [v.modelo, v.placa, v.ano].filter(Boolean).join(' · ')
+    : 'Sem veículo';
   document.getElementById('detailPhone').textContent      = order.cliente.telefone;
   document.getElementById('detailTotal').textContent      = fmt(calcTotal(order));
 
@@ -255,7 +236,7 @@ function initEventListeners() {
 
   document.getElementById('amountReceived').addEventListener('input', updateChange);
 
-  document.getElementById('confirmPaymentBtn').addEventListener('click', () => {
+  document.getElementById('confirmPaymentBtn').addEventListener('click', async () => {
     if (!selectedOrderId) return;
 
     const method = document.getElementById('paymentMethod').value;
@@ -264,9 +245,11 @@ function initEventListeners() {
       return;
     }
 
+    const order = orders.find(o => o.id === selectedOrderId);
+    if (!order) return;
+    const total = calcTotal(order);
+
     if (method === 'dinheiro') {
-      const order    = orders.find(o => o.id === selectedOrderId);
-      const total    = calcTotal(order);
       const received = parseFloat(document.getElementById('amountReceived').value) || 0;
       if (received < total) {
         showToast('Valor recebido é inferior ao total do pedido.', 'error');
@@ -274,15 +257,25 @@ function initEventListeners() {
       }
     }
 
-    const id    = selectedOrderId;
-    const order = orders.find(o => o.id === id);
-    if (order) order.status = 'pago';
+    const btn = document.getElementById('confirmPaymentBtn');
+    btn.classList.add('btn--loading');
+    btn.disabled = true;
 
-    removeOrder(id, () => {
-      renderQueue();
-      clearDetail();
+    try {
+      await api.post(`/pedidos/${order.id}/pagar`, { forma_pagamento: method, valor: total });
+      order.status = 'pago';   // exclui da fila no próximo render
       showToast('Pagamento confirmado com sucesso!', 'success');
-    });
+      removeOrder(order.id, () => {
+        renderQueue();
+        clearDetail();
+      });
+    } catch (err) {
+      console.error('[caixa] falha ao pagar:', err);
+      showToast(err instanceof ApiError ? err.message : 'Erro ao confirmar pagamento.', 'error');
+    } finally {
+      btn.classList.remove('btn--loading');
+      btn.disabled = false;
+    }
   });
 
   document.getElementById('cancelOrderBtn').addEventListener('click', () => {
@@ -299,19 +292,30 @@ function initEventListeners() {
   document.getElementById('modalCancelClose').addEventListener('click',  () => closeModal('modalCancelamento'));
   document.getElementById('modalCancelCloseX').addEventListener('click', () => closeModal('modalCancelamento'));
 
-  document.getElementById('confirmCancelBtn').addEventListener('click', () => {
+  document.getElementById('confirmCancelBtn').addEventListener('click', async () => {
     if (!selectedOrderId) return;
 
-    const id    = selectedOrderId;
-    const order = orders.find(o => o.id === id);
-    if (order) order.status = 'cancelado';
+    const order = orders.find(o => o.id === selectedOrderId);
+    if (!order) return;
+    const motivo = document.getElementById('cancelReason').value.trim();
 
-    closeModal('modalCancelamento');
-    removeOrder(id, () => {
-      renderQueue();
-      clearDetail();
+    const btn = document.getElementById('confirmCancelBtn');
+    btn.disabled = true;
+
+    try {
+      await api.post(`/pedidos/${order.id}/cancelar`, { motivo });
+      order.status = 'cancelado';
+      closeModal('modalCancelamento');
       showToast('Pedido cancelado com sucesso.', 'warning');
-    });
+      removeOrder(order.id, () => {
+        renderQueue();
+        clearDetail();
+      });
+    } catch (err) {
+      console.error('[caixa] falha ao cancelar:', err);
+      showToast(err instanceof ApiError ? err.message : 'Erro ao cancelar pedido.', 'error');
+      btn.disabled = false;   // reabilita pra nova tentativa
+    }
   });
 }
 
@@ -343,10 +347,10 @@ function startTimerUpdates() {
 }
 
 // ---------------------------------------------------------------------------
-// Polling every 10 s (re-renders queue with updated timers)
+// Polling every 10 s (re-busca a fila na API)
 // ---------------------------------------------------------------------------
 function startPolling() {
-  setInterval(renderQueue, 10_000);
+  setInterval(fetchOrders, 10_000);
 }
 
 // ---------------------------------------------------------------------------
@@ -355,7 +359,7 @@ function startPolling() {
 document.addEventListener('DOMContentLoaded', () => {
   initLayout({ pageTitle: 'Caixa' });
   initModals();
-  renderQueue();
+  fetchOrders();
   initEventListeners();
   startTimerUpdates();
   startPolling();
