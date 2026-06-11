@@ -15,6 +15,7 @@
 import { requireAuth } from '../core/auth.js';
 import { initLayout }  from '../components/layout.js';
 import { showToast }   from '../components/toast.js';
+import { api, ApiError } from '../core/api.js';
 
 /* ── Guard ──────────────────────────────────────────────── */
 requireAuth('../login.html');
@@ -26,7 +27,7 @@ const state = {
   items:           [],   // { id, codigo, nome, estoque, qty }
 };
 
-/* ── Mock DB ────────────────────────────────────────────── */
+/* ── (LEGADO) Dados mock — não usados após a integração com a API ──────── */
 const MOCK_CLIENTS = [
   { id: 1, nome: 'João Silva',      telefone: '(38) 99999-9999', placas: ['ABC-1234', 'XYZ-5678'], ultimoPedido: '20/05/2025' },
   { id: 2, nome: 'Maria Souza',     telefone: '(38) 98888-8888', placas: ['QWE-2024'],              ultimoPedido: '15/05/2025' },
@@ -66,22 +67,33 @@ function _clientMeta(client) {
   return `${client.telefone} · ${placa} · ${ultimo}`;
 }
 
-/* ── Busca mock ─────────────────────────────────────────── */
-function _searchClients(term) {
-  const q = term.toLowerCase();
-  return MOCK_CLIENTS.filter(c =>
-    c.nome.toLowerCase().includes(q) ||
-    c.telefone.replace(/\D/g, '').includes(q.replace(/\D/g, '')) ||
-    c.placas.some(p => p.toLowerCase().replace(/[^a-z0-9]/g, '').includes(q.replace(/[^a-z0-9]/g, '')))
-  ).slice(0, 5);
+/* ── Cache dos últimos resultados (para reencontrar por id ao selecionar) ── */
+let _clientResults = [];
+let _partResults   = [];
+
+/* ── Busca via API real ─────────────────────────────────── */
+async function _searchClients(term) {
+  const clientes = await api.get(`/clientes?q=${encodeURIComponent(term)}`);
+  _clientResults = (clientes || []).map(c => ({
+    id: c.id,
+    nome: c.nome,
+    telefone: c.telefone,
+    placas: (c.veiculos || []).map(v => v.placa),
+    veiculo_id: c.veiculos && c.veiculos[0] ? c.veiculos[0].id : null,
+    ultimoPedido: null,
+  }));
+  return _clientResults.slice(0, 5);
 }
 
-function _searchParts(term) {
-  const q = term.toLowerCase();
-  return MOCK_PARTS.filter(p =>
-    p.codigo.toLowerCase().includes(q) ||
-    p.nome.toLowerCase().includes(q)
-  );
+async function _searchParts(term) {
+  const pecas = await api.get(`/pecas?q=${encodeURIComponent(term)}`);
+  _partResults = (pecas || []).map(p => ({
+    id: p.id,
+    codigo: p.codigo,
+    nome: p.nome,
+    estoque: p.estoque,
+  }));
+  return _partResults;
 }
 
 /* ── Inicialização ──────────────────────────────────────── */
@@ -150,13 +162,20 @@ function _initStep1() {
   const novoBtn    = document.getElementById('btnNovoCliente');
   const hint       = document.getElementById('clientHint');
 
-  const doSearch = debounce(term => {
+  const doSearch = debounce(async term => {
     if (term.length < 2) {
       _closeResults(results, input);
       return;
     }
 
-    const found = _searchClients(term);
+    let found;
+    try {
+      found = await _searchClients(term);
+    } catch (err) {
+      results.innerHTML = `<div class="search-results__empty">${err instanceof ApiError ? err.message : 'Erro na busca.'}</div>`;
+      _openResults(results, input);
+      return;
+    }
 
     if (!found.length) {
       results.innerHTML = `<div class="search-results__empty">Nenhum cliente encontrado para "${term}"</div>`;
@@ -221,7 +240,7 @@ function _initStep1() {
 }
 
 function _selectClient(id) {
-  const client = MOCK_CLIENTS.find(c => c.id === id);
+  const client = _clientResults.find(c => c.id === id);
   if (!client) return;
 
   state.selectedClient = client;
@@ -264,13 +283,20 @@ function _initStep2() {
   const input   = document.getElementById('partSearch');
   const results = document.getElementById('partResults');
 
-  const doSearch = debounce(term => {
+  const doSearch = debounce(async term => {
     if (term.length < 2) {
       _closeResults(results, input);
       return;
     }
 
-    const found = _searchParts(term);
+    let found;
+    try {
+      found = await _searchParts(term);
+    } catch (err) {
+      results.innerHTML = `<div class="search-results__empty">${err instanceof ApiError ? err.message : 'Erro na busca.'}</div>`;
+      _openResults(results, input);
+      return;
+    }
 
     if (!found.length) {
       results.innerHTML = `<div class="search-results__empty">Nenhuma peça encontrada para "${term}"</div>`;
@@ -330,7 +356,7 @@ function _initStep2() {
 
 function _addItem(id) {
   if (state.items.find(i => i.id === id)) return;
-  const part = MOCK_PARTS.find(p => p.id === id);
+  const part = _partResults.find(p => p.id === id);
   if (!part) return;
 
   state.items.push({ ...part, qty: 1 });
@@ -352,12 +378,12 @@ function _setQty(id, value) {
 
 function _renderItems() {
   const list  = document.getElementById('itemsList');
-  const empty = document.getElementById('itemsEmpty');
 
   if (state.items.length === 0) {
-    list.innerHTML = '';
-    list.appendChild(empty);
-    empty.style.display = '';
+    // Recria o placeholder do zero — o nó original é removido do DOM quando a
+    // lista é renderizada com itens (innerHTML), então não dá pra reanexá-lo.
+    list.innerHTML =
+      '<div class="items-list__empty" id="itemsEmpty">Nenhuma peça adicionada. Use a busca acima.</div>';
     return;
   }
 
@@ -431,24 +457,31 @@ function _renderSummary() {
   `).join('');
 }
 
-function _submitOrder() {
+async function _submitOrder() {
   const btn = document.getElementById('btnCriarPedido');
   btn.classList.add('btn--loading');
   btn.disabled = true;
 
-  // Simulação de chamada à API
-  setTimeout(() => {
-    btn.classList.remove('btn--loading');
-    btn.disabled = false;
+  try {
+    const body = {
+      cliente_id: state.selectedClient.id,
+      itens: state.items.map(i => ({ peca_id: i.id, qtd: i.qty })),
+    };
+    if (state.selectedClient.veiculo_id) {
+      body.veiculo_id = state.selectedClient.veiculo_id;
+    }
 
-    showToast(
-      `Pedido criado com sucesso para ${state.selectedClient.nome}!`,
-      'success'
-    );
-
+    const pedido = await api.post('/pedidos', body);
+    showToast(`Pedido ${pedido.os} criado para ${state.selectedClient.nome}!`, 'success');
     _resetForm();
     goToStep(1);
-  }, 1000);
+  } catch (err) {
+    console.error('[novo-pedido] falha no submit:', err);
+    showToast(err instanceof ApiError ? err.message : 'Erro ao criar pedido.', 'error');
+  } finally {
+    btn.classList.remove('btn--loading');
+    btn.disabled = false;
+  }
 }
 
 /* ================================================================

@@ -14,6 +14,8 @@
  * login() e _fetchSession() precisam ser atualizadas.
  * ============================================================ */
 
+import { api, setTokens, clearTokens, ApiError } from './api.js';
+
 const AUTH_KEY = 'gmx_session';
 
 /** @typedef {{ id: number, name: string, role: 'admin'|'estoque'|'vendedor'|'caixa'|'montador' }} User */
@@ -40,31 +42,32 @@ function _setUser(user) {
 }
 
 /**
- * Realiza login (mock — substituir por fetch ao endpoint /auth/login).
+ * Realiza login via API real (POST /auth/login).
+ * O `perfil` do backend já corresponde ao `role` do front (mesmos valores).
  * @param {string} username
  * @param {string} password
  * @returns {Promise<{ok: boolean, error?: string}>}
  */
 async function login(username, password) {
-  // --- MOCK: simula latência de rede ---
-  await new Promise(r => setTimeout(r, 1200));
+  try {
+    const resp = await api.post(
+      '/auth/login',
+      { login: username.trim(), senha: password },
+      { auth: false }
+    );
+    // resp = { accessToken, refreshToken, expiresIn, usuario: {id, nome, login, perfil} }
+    setTokens({ accessToken: resp.accessToken, refreshToken: resp.refreshToken });
 
-  const MOCK_USERS = {
-    admin:    { id: 1, name: 'Samuel Freitas',  role: 'admin' },
-    estoque:  { id: 2, name: 'Luis Felipe',     role: 'estoque' },
-    vendedor: { id: 3, name: 'Carla Mendes',    role: 'vendedor' },
-    caixa:    { id: 4, name: 'Paulo Andrade',   role: 'caixa' },
-    montador: { id: 5, name: 'Ricardo Costa',   role: 'montador' },
-  };
-
-  const found = MOCK_USERS[username.toLowerCase()];
-
-  if (!found || password.length < 1) {
-    return { ok: false, error: 'Usuário ou senha inválidos. Verifique suas credenciais.' };
+    const u = resp.usuario;
+    _setUser({ id: u.id, name: u.nome, role: u.perfil, login: u.login });
+    return { ok: true };
+  } catch (err) {
+    const msg =
+      err instanceof ApiError && err.status === 401
+        ? 'Usuário ou senha inválidos. Verifique suas credenciais.'
+        : (err && err.message) || 'Erro ao entrar. Tente novamente.';
+    return { ok: false, error: msg };
   }
-
-  _setUser(found);
-  return { ok: true };
 }
 
 /**
@@ -73,6 +76,7 @@ async function login(username, password) {
  */
 function logout(loginPath) {
   sessionStorage.removeItem(AUTH_KEY);
+  clearTokens();
   const base = _getBasePath();
   window.location.href = loginPath || `${base}login.html`;
 }
