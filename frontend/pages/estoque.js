@@ -2,6 +2,7 @@ import { requireAuth, getUser }              from '../core/auth.js';
 import { initLayout }                        from '../components/layout.js';
 import { showToast }                         from '../components/toast.js';
 import { openModal, closeModal, initModals } from '../components/modal.js';
+import { api, ApiError }                     from '../core/api.js';
 
 requireAuth('../login.html');
 
@@ -11,82 +12,65 @@ if (_u && !['admin', 'estoque'].includes(_u.role)) {
 }
 
 // ---------------------------------------------------------------------------
-// Mock data
+// Estado
 // ---------------------------------------------------------------------------
-const _now = Date.now();
-
-const mockPedidos = [
-  {
-    id: '1',
-    os: 'OS-2501',
-    cliente:  { nome: 'João Silva',        telefone: '(11) 99123-4567' },
-    veiculo:  { modelo: 'Honda Civic',     placa: 'ABC-1234', ano: 2021 },
-    itens: [
-      { codigo: 'VD-001', descricao: 'Parabrisa dianteiro',  qtdSolicitada: 1, estoqueDisponivel: 3 },
-      { codigo: 'BR-003', descricao: 'Borracha de vedação',  qtdSolicitada: 2, estoqueDisponivel: 15 },
-      { codigo: 'MO-001', descricao: 'Mão de obra instalação', qtdSolicitada: 1, estoqueDisponivel: 999 },
-    ],
-    pagoEm: new Date(_now - 42 * 60 * 1000),
-  },
-  {
-    id: '2',
-    os: 'OS-2502',
-    cliente:  { nome: 'Maria Souza',       telefone: '(11) 98765-4321' },
-    veiculo:  { modelo: 'Toyota Corolla',  placa: 'QWE-5678', ano: 2022 },
-    itens: [
-      { codigo: 'VD-012', descricao: 'Vidro traseiro',       qtdSolicitada: 1, estoqueDisponivel: 0 },
-      { codigo: 'BR-003', descricao: 'Borracha de vedação',  qtdSolicitada: 2, estoqueDisponivel: 15 },
-      { codigo: 'MO-001', descricao: 'Mão de obra instalação', qtdSolicitada: 1, estoqueDisponivel: 999 },
-    ],
-    pagoEm: new Date(_now - 28 * 60 * 1000),
-  },
-  {
-    id: '3',
-    os: 'OS-2503',
-    cliente:  { nome: 'Carlos Lima',       telefone: '(21) 97654-3210' },
-    veiculo:  { modelo: 'VW Gol',          placa: 'MNO-9012', ano: 2019 },
-    itens: [
-      { codigo: 'PL-007', descricao: 'Película fumê',        qtdSolicitada: 1, estoqueDisponivel: 1 },
-      { codigo: 'MO-001', descricao: 'Mão de obra instalação', qtdSolicitada: 1, estoqueDisponivel: 999 },
-    ],
-    pagoEm: new Date(_now - 15 * 60 * 1000),
-  },
-  {
-    id: '4',
-    os: 'OS-2504',
-    cliente:  { nome: 'Ana Paula Ferreira', telefone: '(11) 96543-2109' },
-    veiculo:  { modelo: 'Fiat Uno',         placa: 'XYZ-3456', ano: 2018 },
-    itens: [
-      { codigo: 'VD-001', descricao: 'Parabrisa dianteiro',  qtdSolicitada: 1, estoqueDisponivel: 3 },
-      { codigo: 'VD-012', descricao: 'Vidro traseiro',       qtdSolicitada: 1, estoqueDisponivel: 0 },
-      { codigo: 'BR-003', descricao: 'Borracha de vedação',  qtdSolicitada: 3, estoqueDisponivel: 2 },
-      { codigo: 'MO-001', descricao: 'Mão de obra instalação', qtdSolicitada: 1, estoqueDisponivel: 999 },
-    ],
-    pagoEm: new Date(_now - 7 * 60 * 1000),
-  },
-  {
-    id: '5',
-    os: 'OS-2505',
-    cliente:  { nome: 'Ricardo Braga',     telefone: '(31) 95432-1098' },
-    veiculo:  { modelo: 'Chevrolet Onix',  placa: 'DEF-7890', ano: 2023 },
-    itens: [
-      { codigo: 'VD-001', descricao: 'Parabrisa dianteiro',  qtdSolicitada: 1, estoqueDisponivel: 3 },
-      { codigo: 'PL-007', descricao: 'Película fumê',        qtdSolicitada: 1, estoqueDisponivel: 1 },
-      { codigo: 'MO-001', descricao: 'Mão de obra instalação', qtdSolicitada: 1, estoqueDisponivel: 999 },
-    ],
-    pagoEm: new Date(_now - 3 * 60 * 1000),
-  },
-];
-
-let pedidos = [...mockPedidos];
-let pedidoAtivo = null;
+let pedidos      = [];   // fila adaptada (pago + em_separacao)
+let pedidoAtivo  = null; // pedido aberto na VIEW 2 (itens carregam id + qtdConfirmada)
 let pollingTimer = null;
+
+// ---------------------------------------------------------------------------
+// API — adapta o pedido cru ao formato da tela
+// ---------------------------------------------------------------------------
+function adaptPedido(p) {
+  return {
+    id:     String(p.id),
+    os:     p.os,
+    status: p.status,
+    cliente: {
+      nome:     p.cliente?.nome     ?? '—',
+      telefone: p.cliente?.telefone ?? '—',
+    },
+    veiculo: p.veiculo
+      ? { modelo: p.veiculo.modelo ?? '—', placa: p.veiculo.placa ?? '—', ano: p.veiculo.ano ?? null }
+      : null,
+    pagoEm: p.pago_em ? new Date(p.pago_em) : new Date(),
+    itens: (p.itens ?? []).map(i => ({
+      id:                i.id,                            // ItemPedido.id → URL do PUT separar
+      codigo:            i.peca?.codigo ?? '—',
+      descricao:         i.peca?.nome   ?? `Peça ${i.peca_id}`,
+      qtdSolicitada:     i.qtd,
+      estoqueDisponivel: Number(i.peca?.estoque ?? 0),
+      qtdConfirmada:     i.qtd_confirmada ?? null,        // != null → já separado
+    })),
+  };
+}
+
+/** Carrega a fila: pedidos pagos + os já em separação (pra poder retomar). */
+async function fetchFila() {
+  const listEl = document.getElementById('separacaoQueue');
+  try {
+    const [pagos, emSep] = await Promise.all([
+      api.get('/pedidos?status=pago'),
+      api.get('/pedidos?status=em_separacao'),
+    ]);
+    pedidos = [...(pagos || []), ...(emSep || [])].map(adaptPedido);
+  } catch (err) {
+    console.error('[estoque] falha ao carregar fila:', err);
+    if (!pedidos.length) {
+      listEl.innerHTML = `<p class="estoque-queue__empty">${err instanceof ApiError ? err.message : 'Erro ao carregar fila.'}</p>`;
+      document.getElementById('queueCount').textContent = '—';
+    }
+    return;
+  }
+  renderFila();
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 function formatTimer(date) {
-  const mins = Math.floor((Date.now() - date.getTime()) / 60_000);
+  // clamp em 0: evita "há -X min" por skew de relógio servidor/cliente.
+  const mins = Math.max(0, Math.floor((Date.now() - date.getTime()) / 60_000));
   if (mins < 60) return `há ${mins} min`;
   const h = Math.floor(mins / 60);
   const m = mins % 60;
@@ -94,7 +78,8 @@ function formatTimer(date) {
 }
 
 function temEstoqueCritico(pedido) {
-  return pedido.itens.some(it => it.estoqueDisponivel < it.qtdSolicitada);
+  // Item já separado não conta como crítico (a baixa já foi feita).
+  return pedido.itens.some(it => it.qtdConfirmada == null && it.estoqueDisponivel < it.qtdSolicitada);
 }
 
 function svgIcon(name) {
@@ -108,7 +93,7 @@ function renderFila() {
   const listEl  = document.getElementById('separacaoQueue');
   const countEl = document.getElementById('queueCount');
 
-  const fila = pedidos.filter(p => p.status !== 'devolvido_caixa').sort((a, b) => a.pagoEm - b.pagoEm);
+  const fila = pedidos.slice().sort((a, b) => a.pagoEm - b.pagoEm);
 
   countEl.textContent = `${fila.length} pedido${fila.length !== 1 ? 's' : ''}`;
   listEl.innerHTML = '';
@@ -127,7 +112,9 @@ function buildCardFila(pedido) {
   card.setAttribute('role', 'listitem');
   card.dataset.pedidoId = pedido.id;
 
-  const critico = temEstoqueCritico(pedido);
+  const critico    = temEstoqueCritico(pedido);
+  const emAndamento = pedido.status === 'em_separacao';
+  const veiculo    = pedido.veiculo ? `${pedido.veiculo.modelo} · ${pedido.veiculo.placa}` : 'Sem veículo';
 
   card.innerHTML = `
     <div class="estoque-card__body">
@@ -136,7 +123,7 @@ function buildCardFila(pedido) {
         <span class="estoque-card__cliente">${pedido.cliente.nome}</span>
         <span class="estoque-card__veiculo">
           ${svgIcon('car')}
-          ${pedido.veiculo.modelo} · ${pedido.veiculo.placa}
+          ${veiculo}
         </span>
         <div class="estoque-card__meta">
           <span class="estoque-card__timer">${formatTimer(pedido.pagoEm)}</span>
@@ -146,7 +133,7 @@ function buildCardFila(pedido) {
       </div>
       <div class="estoque-card__action">
         <button class="btn btn--accent btn--md btn-iniciar" data-id="${pedido.id}">
-          Iniciar Separação
+          ${emAndamento ? 'Continuar Separação' : 'Iniciar Separação'}
         </button>
       </div>
     </div>
@@ -163,21 +150,39 @@ function buildCardFila(pedido) {
 // ---------------------------------------------------------------------------
 // VIEW 2 — Tela de Separação
 // ---------------------------------------------------------------------------
-function abrirSeparacao(id) {
-  pedidoAtivo = pedidos.find(p => p.id === id);
-  if (!pedidoAtivo) return;
+async function abrirSeparacao(id) {
+  const pedido = pedidos.find(p => p.id === id);
+  if (!pedido) return;
+
+  const btn = document.querySelector(`.estoque-card[data-pedido-id="${id}"] .btn-iniciar`);
+  if (btn) { btn.classList.add('btn--loading'); btn.disabled = true; }
+
+  try {
+    // pago → em_separacao (idempotente p/ quem já está em separação).
+    if (pedido.status === 'pago') {
+      await api.post(`/pedidos/${pedido.id}/iniciar-separacao`);
+    }
+    // Recarrega o detalhe pra ter item.id e qtd_confirmada atuais.
+    const fresh = await api.get(`/pedidos/${pedido.id}`);
+    pedidoAtivo = adaptPedido(fresh);
+  } catch (err) {
+    console.error('[estoque] falha ao iniciar separação:', err);
+    showToast(err instanceof ApiError ? err.message : 'Erro ao iniciar separação.', 'error');
+    if (btn) { btn.classList.remove('btn--loading'); btn.disabled = false; }
+    return;
+  }
 
   document.getElementById('viewFila').classList.add('u-hidden');
-  const view2 = document.getElementById('viewSeparacao');
-  view2.classList.remove('u-hidden');
+  document.getElementById('viewSeparacao').classList.remove('u-hidden');
 
   document.getElementById('separacaoOs').textContent      = pedidoAtivo.os;
   document.getElementById('separacaoCliente').textContent = pedidoAtivo.cliente.nome;
-  document.getElementById('separacaoVeiculo').textContent =
-    `${pedidoAtivo.veiculo.modelo} · ${pedidoAtivo.veiculo.placa} · ${pedidoAtivo.veiculo.ano}`;
+  const v = pedidoAtivo.veiculo;
+  document.getElementById('separacaoVeiculo').textContent = v
+    ? [v.modelo, v.placa, v.ano].filter(Boolean).join(' · ')
+    : 'Sem veículo';
 
-  const critico = temEstoqueCritico(pedidoAtivo);
-  document.getElementById('bannerEstoque').classList.toggle('u-hidden', !critico);
+  document.getElementById('bannerEstoque').classList.toggle('u-hidden', !temEstoqueCritico(pedidoAtivo));
 
   renderItens();
   atualizarBotaoEnvio();
@@ -187,7 +192,7 @@ function voltarParaFila() {
   pedidoAtivo = null;
   document.getElementById('viewSeparacao').classList.add('u-hidden');
   document.getElementById('viewFila').classList.remove('u-hidden');
-  renderFila();
+  fetchFila();
 }
 
 function renderItens() {
@@ -195,23 +200,30 @@ function renderItens() {
   container.innerHTML = '';
 
   pedidoAtivo.itens.forEach((item, idx) => {
-    const row = buildItemRow(item, idx);
-    container.appendChild(row);
+    container.appendChild(buildItemRow(item, idx));
   });
 }
 
 function buildItemRow(item, idx) {
-  const insuficiente = item.estoqueDisponivel < item.qtdSolicitada;
+  const jaSeparado  = item.qtdConfirmada != null;
+  const insuficiente = !jaSeparado && item.estoqueDisponivel < item.qtdSolicitada;
+
   const row = document.createElement('div');
   row.className = 'separacao-item';
   row.setAttribute('role', 'listitem');
   row.dataset.idx = idx;
 
   if (insuficiente) row.classList.add('separacao-item--blocked');
+  if (jaSeparado)   row.classList.add('separacao-item--confirmado');
+
+  const checkAttrs = jaSeparado ? 'checked disabled' : (insuficiente ? 'disabled' : '');
+  const inputAttrs = jaSeparado
+    ? `value="${item.qtdConfirmada}" disabled`
+    : 'placeholder="—" disabled';
 
   row.innerHTML = `
     <label class="separacao-item__check-wrap" aria-label="Confirmar item ${item.descricao}">
-      <input type="checkbox" class="separacao-item__checkbox" data-idx="${idx}" ${insuficiente ? 'disabled' : ''}>
+      <input type="checkbox" class="separacao-item__checkbox" data-idx="${idx}" ${checkAttrs}>
       <span class="separacao-item__check-custom" aria-hidden="true">${svgIcon('check')}</span>
     </label>
     <div class="separacao-item__details">
@@ -235,27 +247,28 @@ function buildItemRow(item, idx) {
         type="number"
         id="confirm-${idx}"
         class="separacao-item__confirm-input"
-        min="0"
+        min="1"
         max="${item.estoqueDisponivel}"
-        placeholder="—"
-        disabled
+        ${inputAttrs}
         aria-label="Quantidade confirmada para ${item.descricao}"
       >
     </div>
   `;
 
+  if (jaSeparado || insuficiente) {
+    if (insuficiente) {
+      row.querySelector('.separacao-item__check-wrap').addEventListener('click', (e) => {
+        e.preventDefault();
+        showToast(`Item ${item.codigo} não pode ser confirmado: estoque insuficiente. Devolva o pedido ao caixa.`, 'error');
+      });
+    }
+    return row;
+  }
+
   const checkbox = row.querySelector('.separacao-item__checkbox');
   const input    = row.querySelector('.separacao-item__confirm-input');
-
-  if (insuficiente) {
-    row.querySelector('.separacao-item__check-wrap').addEventListener('click', (e) => {
-      e.preventDefault();
-      showToast(`Item ${item.codigo} não pode ser confirmado: estoque insuficiente. Devolva o pedido ao caixa.`, 'error');
-    });
-  } else {
-    checkbox.addEventListener('change', () => onCheckboxChange(row, item, idx, checkbox, input));
-    input.addEventListener('input', () => onConfirmInput(row, item, input));
-  }
+  checkbox.addEventListener('change', () => onCheckboxChange(row, item, idx, checkbox, input));
+  input.addEventListener('input', () => onConfirmInput(row, item, input));
 
   return row;
 }
@@ -267,12 +280,12 @@ function onCheckboxChange(row, item, idx, checkbox, input) {
       ? item.qtdSolicitada
       : item.estoqueDisponivel;
     input.value = autoQtd;
-    input.classList.remove('field--error');
+    input.classList.remove('separacao-item__confirm-input--error');
     atualizarRowEstado(row, item, input);
   } else {
     input.disabled = true;
     input.value = '';
-    input.classList.remove('field--error');
+    input.classList.remove('separacao-item__confirm-input--error');
     row.classList.remove('separacao-item--confirmado');
   }
   atualizarBotaoEnvio();
@@ -302,51 +315,77 @@ function atualizarRowEstado(row, item, input) {
 
 function todosConfirmados() {
   if (!pedidoAtivo) return false;
-  if (pedidoAtivo.itens.some(it => it.estoqueDisponivel < it.qtdSolicitada)) return false;
   const rows = document.querySelectorAll('.separacao-item');
   if (rows.length === 0) return false;
 
   return Array.from(rows).every(row => {
+    const idx  = Number(row.dataset.idx);
+    const item = pedidoAtivo.itens[idx];
+    if (item.qtdConfirmada != null) return true;                          // já separado
+    if (item.estoqueDisponivel < item.qtdSolicitada) return false;       // insuficiente
     const checkbox = row.querySelector('.separacao-item__checkbox');
     const input    = row.querySelector('.separacao-item__confirm-input');
     if (!checkbox.checked) return false;
     const val = parseInt(input.value, 10);
-    const idx = parseInt(row.dataset.idx, 10);
-    const item = pedidoAtivo.itens[idx];
-    return !isNaN(val) && val >= 0 && val <= item.estoqueDisponivel && input.value !== '';
+    return !isNaN(val) && val > 0 && val <= item.estoqueDisponivel && input.value !== '';
   });
 }
 
 function atualizarBotaoEnvio() {
-  const btn = document.getElementById('btnEnviarMontagem');
-  btn.disabled = !todosConfirmados();
+  document.getElementById('btnEnviarMontagem').disabled = !todosConfirmados();
 }
 
-function enviarParaMontagem() {
+async function enviarParaMontagem() {
   if (!pedidoAtivo) return;
 
-  const rows = document.querySelectorAll('.separacao-item');
-  const valido = Array.from(rows).every(row => {
+  // Coleta os itens que ainda precisam ser separados (não os já confirmados).
+  const rows = [...document.querySelectorAll('.separacao-item')];
+  const aSeparar = [];
+  for (const row of rows) {
+    const idx  = Number(row.dataset.idx);
+    const item = pedidoAtivo.itens[idx];
+    if (item.qtdConfirmada != null) continue; // já separado no servidor
+
     const checkbox = row.querySelector('.separacao-item__checkbox');
     const input    = row.querySelector('.separacao-item__confirm-input');
-    if (!checkbox.checked) return false;
-    const val = parseInt(input.value, 10);
-    const idx = parseInt(row.dataset.idx, 10);
-    const item = pedidoAtivo.itens[idx];
-    if (!isNaN(val) && val > item.estoqueDisponivel) {
-      showToast(`Quantidade confirmada para "${item.descricao}" excede o estoque disponível.`, 'error');
+    const val      = parseInt(input.value, 10);
+    if (!checkbox.checked || isNaN(val) || val <= 0 || val > item.estoqueDisponivel) {
+      showToast(`Confirme uma quantidade válida para "${item.descricao}".`, 'error');
       input.classList.add('separacao-item__confirm-input--error');
-      return false;
+      return;
     }
-    return true;
-  });
+    aSeparar.push({ item, val });
+  }
 
-  if (!valido) return;
+  const btn = document.getElementById('btnEnviarMontagem');
+  btn.classList.add('btn--loading');
+  btn.disabled = true;
 
-  const os = pedidoAtivo.os;
-  pedidos = pedidos.filter(p => p.id !== pedidoAtivo.id);
-  voltarParaFila();
-  showToast(`Pedido ${os} enviado para montagem!`, 'success');
+  try {
+    // Baixa cada item (lock + recheck no servidor), depois libera o pedido.
+    for (const { item, val } of aSeparar) {
+      await api.put(`/pedidos/${pedidoAtivo.id}/itens/${item.id}/separar`, { qtd_confirmada: val });
+      item.qtdConfirmada = val;
+    }
+    await api.post(`/pedidos/${pedidoAtivo.id}/enviar-montagem`);
+
+    const os = pedidoAtivo.os;
+    showToast(`Pedido ${os} enviado para montagem!`, 'success');
+    voltarParaFila();
+  } catch (err) {
+    console.error('[estoque] falha ao enviar para montagem:', err);
+    showToast(err instanceof ApiError ? err.message : 'Erro ao enviar para montagem.', 'error');
+    // Re-sincroniza a VIEW 2 (estoque/itens podem ter mudado sob concorrência).
+    try {
+      const fresh = await api.get(`/pedidos/${pedidoAtivo.id}`);
+      pedidoAtivo = adaptPedido(fresh);
+      renderItens();
+      atualizarBotaoEnvio();
+    } catch { /* mantém o estado atual */ }
+  } finally {
+    btn.classList.remove('btn--loading');
+    btn.disabled = false;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -365,23 +404,24 @@ window._validarMotivoDevolucao = () => {
   document.getElementById('btnConfirmarDevolucao').disabled = motivo.trim().length === 0;
 };
 
-window._confirmarDevolucao = () => {
+window._confirmarDevolucao = async () => {
   const motivo = document.getElementById('motivoDevolucao').value.trim();
   if (!motivo || !pedidoAtivo) return;
 
-  const os      = pedidoAtivo.os;
-  const pedidoId = pedidoAtivo.id;
+  const btn = document.getElementById('btnConfirmarDevolucao');
+  btn.disabled = true;
 
-  closeModal('modalDevolucao');
-
-  const p = pedidos.find(x => x.id === pedidoId);
-  if (p) {
-    p.status           = 'devolvido_caixa';
-    p.motivoDevolucao  = motivo;
+  try {
+    await api.post(`/pedidos/${pedidoAtivo.id}/devolver-caixa`, { motivo });
+    const os = pedidoAtivo.os;
+    closeModal('modalDevolucao');
+    showToast(`Pedido ${os} devolvido ao caixa.`, 'warning');
+    voltarParaFila();
+  } catch (err) {
+    console.error('[estoque] falha ao devolver ao caixa:', err);
+    showToast(err instanceof ApiError ? err.message : 'Erro ao devolver ao caixa.', 'error');
+    btn.disabled = false;
   }
-
-  voltarParaFila();
-  showToast(`Pedido ${os} devolvido ao caixa.`, 'warning');
 };
 
 // ---------------------------------------------------------------------------
@@ -399,12 +439,12 @@ function startTimerUpdates() {
 }
 
 // ---------------------------------------------------------------------------
-// Polling (re-renderiza fila a cada 10s enquanto na VIEW 1)
+// Polling (re-busca a fila a cada 10s enquanto na VIEW 1)
 // ---------------------------------------------------------------------------
 function startPolling() {
   pollingTimer = setInterval(() => {
     if (!document.getElementById('viewFila').classList.contains('u-hidden')) {
-      renderFila();
+      fetchFila();
     }
   }, 10_000);
 }
@@ -414,7 +454,7 @@ function startPolling() {
 // ---------------------------------------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
   initLayout({ pageTitle: 'Estoque' });
-  renderFila();
+  fetchFila();
 
   document.getElementById('btnVoltar').addEventListener('click', voltarParaFila);
   document.getElementById('btnDevolverCaixa').addEventListener('click', abrirDevolucao);
