@@ -3,14 +3,28 @@
   "info": {
     "title": "AutoFluxo API",
     "version": "1.0.0",
-    "description": "API para autenticação e fluxo de exemplo."
+    "description": "API do AutoFluxo: autenticação, fluxo de pedidos, relatórios admin, auditoria e busca por linguagem natural."
   },
-  "servers": [
-    { "url": "/api" }
+  "servers": [{ "url": "/api" }],
+  "tags": [
+    { "name": "Auth", "description": "Autenticação" },
+    { "name": "Busca IA", "description": "Busca em linguagem natural (NL → SQL), admin" },
+    { "name": "Relatórios", "description": "Relatórios gerenciais (admin, JSON ou CSV)" },
+    { "name": "Auditoria", "description": "Consulta de logs de auditoria (admin)" }
   ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" }
+    },
+    "responses": {
+      "Unauthorized": { "description": "Token ausente ou inválido" },
+      "Forbidden": { "description": "Requer perfil admin" }
+    }
+  },
   "paths": {
     "/auth/login": {
       "post": {
+        "tags": ["Auth"],
         "summary": "Login",
         "requestBody": {
           "required": true,
@@ -28,8 +42,325 @@
           }
         },
         "responses": {
-          "200": { "description": "Success" },
-          "401": { "description": "Unauthorized" }
+          "200": { "description": "Tokens + dados do usuário" },
+          "401": { "description": "Credenciais inválidas" }
+        }
+      }
+    },
+    "/search/nl": {
+      "post": {
+        "tags": ["Busca IA"],
+        "summary": "Busca em linguagem natural (NL → SQL)",
+        "description": "Admin-only. Traduz a pergunta em SQL (OpenAI), valida (só SELECT, sem colunas sensíveis), executa numa conexão read-only com statement_timeout. Rate-limit dedicado.",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "query": { "type": "string", "minLength": 1, "maxLength": 500, "example": "5 peças com menor estoque" }
+                },
+                "required": ["query"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SQL gerado e linhas retornadas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "sql": { "type": "string" },
+                    "rows": { "type": "array", "items": { "type": "object" } }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Consulta não permitida ou inexecutável" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "description": "Rate-limit excedido" },
+          "503": { "description": "Busca por IA indisponível (sem OPENAI_API_KEY ou role read-only)" }
+        }
+      }
+    },
+    "/relatorios/vendas": {
+      "get": {
+        "tags": ["Relatórios"],
+        "summary": "R1 — Vendas por período (receita realizada via pagamentos)",
+        "description": "Admin-only. Retorna JSON; com header `Accept: text/csv` retorna CSV (anexo, BOM UTF-8).",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "inicio", "in": "query", "required": true, "schema": { "type": "string", "format": "date" } },
+          { "name": "fim", "in": "query", "required": true, "schema": { "type": "string", "format": "date" } },
+          { "name": "agrupamento", "in": "query", "schema": { "type": "string", "enum": ["dia", "semana", "mes"], "default": "dia" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Vendas agrupadas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "periodo": { "type": "string", "format": "date-time" },
+                      "qtd_pagamentos": { "type": "integer" },
+                      "receita": { "type": "number" }
+                    }
+                  }
+                }
+              },
+              "text/csv": { "schema": { "type": "string" } }
+            }
+          },
+          "400": { "description": "Parâmetros inválidos (inicio/fim obrigatórios)" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/relatorios/pecas-mais-vendidas": {
+      "get": {
+        "tags": ["Relatórios"],
+        "summary": "R2 — Peças mais vendidas no período",
+        "description": "Admin-only. JSON ou CSV (Accept: text/csv). Exclui pedidos cancelados.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "inicio", "in": "query", "required": true, "schema": { "type": "string", "format": "date" } },
+          { "name": "fim", "in": "query", "required": true, "schema": { "type": "string", "format": "date" } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 10 } },
+          { "name": "orderBy", "in": "query", "schema": { "type": "string", "enum": ["qtd", "receita"], "default": "qtd" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Peças ordenadas por quantidade ou receita",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "integer" },
+                      "codigo": { "type": "string" },
+                      "nome": { "type": "string" },
+                      "qtd": { "type": "integer" },
+                      "receita": { "type": "number" }
+                    }
+                  }
+                }
+              },
+              "text/csv": { "schema": { "type": "string" } }
+            }
+          },
+          "400": { "description": "Parâmetros inválidos" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/relatorios/estoque-critico": {
+      "get": {
+        "tags": ["Relatórios"],
+        "summary": "R3 — Estoque crítico (peças ativas com estoque < minimo)",
+        "description": "Admin-only. JSON ou CSV (Accept: text/csv). Mesma regra de /pecas/estoque-critico.",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Peças críticas com qtd_faltante",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "integer" },
+                      "codigo": { "type": "string" },
+                      "nome": { "type": "string" },
+                      "estoque": { "type": "integer" },
+                      "minimo": { "type": "integer" },
+                      "qtd_faltante": { "type": "integer" }
+                    }
+                  }
+                }
+              },
+              "text/csv": { "schema": { "type": "string" } }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/relatorios/historico-cliente": {
+      "get": {
+        "tags": ["Relatórios"],
+        "summary": "R4 — Histórico de pedidos do cliente",
+        "description": "Admin-only. Informe ao menos um de: placa, celular ou telefone. JSON ou CSV (Accept: text/csv).",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "placa", "in": "query", "schema": { "type": "string" } },
+          { "name": "celular", "in": "query", "schema": { "type": "string" } },
+          { "name": "telefone", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pedidos do cliente, mais recentes primeiro",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "integer" },
+                      "os": { "type": "string" },
+                      "status": { "type": "string" },
+                      "total": { "type": "number" },
+                      "criado_em": { "type": "string", "format": "date-time" },
+                      "cliente_nome": { "type": "string" },
+                      "telefone": { "type": "string" },
+                      "placa": { "type": "string", "nullable": true }
+                    }
+                  }
+                }
+              },
+              "text/csv": { "schema": { "type": "string" } }
+            }
+          },
+          "400": { "description": "Informe ao menos placa ou celular" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/relatorios/pedidos-status": {
+      "get": {
+        "tags": ["Relatórios"],
+        "summary": "R5 — Pedidos por status numa data",
+        "description": "Admin-only. Conta pedidos criados na data, agrupados por status. JSON ou CSV (Accept: text/csv).",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "data", "in": "query", "required": true, "schema": { "type": "string", "format": "date" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contagem por status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "status": { "type": "string" },
+                      "total": { "type": "integer" }
+                    }
+                  }
+                }
+              },
+              "text/csv": { "schema": { "type": "string" } }
+            }
+          },
+          "400": { "description": "Data inválida" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/relatorios/performance": {
+      "get": {
+        "tags": ["Relatórios"],
+        "summary": "R6 — Performance dos operadores no período",
+        "description": "Admin-only. Deriva dos dados de negócio: vendedor = pedidos vendidos; montador = montagens concluídas; estoque = movimentações. JSON ou CSV (Accept: text/csv).",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "inicio", "in": "query", "required": true, "schema": { "type": "string", "format": "date" } },
+          { "name": "fim", "in": "query", "required": true, "schema": { "type": "string", "format": "date" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Total por operador, agrupado por perfil",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "perfil": { "type": "string" },
+                      "usuario_id": { "type": "integer" },
+                      "nome": { "type": "string" },
+                      "total": { "type": "integer" }
+                    }
+                  }
+                }
+              },
+              "text/csv": { "schema": { "type": "string" } }
+            }
+          },
+          "400": { "description": "Parâmetros inválidos" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/admin/logs": {
+      "get": {
+        "tags": ["Auditoria"],
+        "summary": "Consulta paginada de logs de auditoria",
+        "description": "Admin-only. Filtros opcionais por usuário e período; paginação.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "usuario_id", "in": "query", "schema": { "type": "integer", "minimum": 1 } },
+          { "name": "inicio", "in": "query", "schema": { "type": "string", "format": "date" } },
+          { "name": "fim", "in": "query", "schema": { "type": "string", "format": "date" } },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "minimum": 1, "default": 1 } },
+          { "name": "pageSize", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 200, "default": 50 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página de logs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "integer" },
+                          "usuario_id": { "type": "integer", "nullable": true },
+                          "acao": { "type": "string" },
+                          "entidade": { "type": "string" },
+                          "entidade_id": { "type": "integer", "nullable": true },
+                          "ip": { "type": "string", "nullable": true },
+                          "detalhe": { "type": "string", "nullable": true },
+                          "criado_em": { "type": "string", "format": "date-time" }
+                        }
+                      }
+                    },
+                    "page": { "type": "integer" },
+                    "pageSize": { "type": "integer" },
+                    "total": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
         }
       }
     }
