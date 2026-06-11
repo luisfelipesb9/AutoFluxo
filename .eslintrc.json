@@ -18,5 +18,13 @@
     "@typescript-eslint/explicit-module-boundary-types": "off",
     "@typescript-eslint/no-explicit-any": "error"
   },
+  "overrides": [
+    {
+      "files": ["**/*.test.ts", "**/__tests__/**"],
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "off"
+      }
+    }
+  ],
   "ignorePatterns": ["dist", "node_modules"]
 }

@@ -1,6 +1,7 @@
 import { registrarLog } from "../../../services/logService";
 import { AppDataSource } from "../../../lib/database";
 import logger from "../../../lib/logger";
+import { requestContext } from "../../../lib/requestContext";
 
 // jest.mock é hoistado: a factory só pode referenciar variáveis com prefixo `mock`.
 jest.mock("../../../lib/database", () => ({
@@ -72,6 +73,41 @@ describe("logService.registrarLog", () => {
     expect(logger.error).toHaveBeenCalledWith(
       expect.objectContaining({ error: "db down", acao: "x.y", entidade: "x" }),
       expect.any(String)
+    );
+  });
+});
+
+describe("logService.registrarLog com requestContext", () => {
+  const saveMock = jest.fn();
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    saveMock.mockReset().mockResolvedValue(undefined);
+    (AppDataSource.getRepository as jest.Mock).mockReturnValue({ save: saveMock });
+  });
+
+  it("anexa ip e usuario_id do contexto quando não informados", async () => {
+    await requestContext.run({ usuarioId: 9, ip: "203.0.113.7" }, async () => {
+      await registrarLog({ acao: "x.y", entidade: "x" });
+    });
+
+    expect(saveMock).toHaveBeenCalledWith(
+      expect.objectContaining({ usuario_id: 9, ip: "203.0.113.7", acao: "x.y" })
+    );
+  });
+
+  it("parâmetros explícitos têm precedência sobre o contexto", async () => {
+    await requestContext.run({ usuarioId: 9, ip: "203.0.113.7" }, async () => {
+      await registrarLog({
+        acao: "x.y",
+        entidade: "x",
+        usuario_id: 1,
+        ip: "10.0.0.1",
+      });
+    });
+
+    expect(saveMock).toHaveBeenCalledWith(
+      expect.objectContaining({ usuario_id: 1, ip: "10.0.0.1" })
     );
   });
 });

@@ -3,63 +3,50 @@
  * ============================================================
  * Controlador da página de Cadastros (Usuários / Peças / Clientes).
  *
- * Arquitetura:
- *  - Importa auth.js  → guarda de autenticação
- *  - Importa layout.js → shell da aplicação
- *  - Importa DataTable → renderização de tabela reutilizável
- *  - Importa modal.js  → openModal / closeModal / initModals
- *  - Importa toast.js  → showToast
+ * Conectado à API real:
+ *  - Listagem:  GET /usuarios | /pecas | /clientes
+ *  - Criar:     POST /usuarios | /pecas | /clientes
+ *  - Editar:    PUT  /usuarios/:id | /pecas/:id | /clientes/:id
+ *  - Desativar: DELETE /usuarios/:id (soft) ; PUT /pecas|clientes/:id { ativo:false }
  *
- * Dados: mock local.
- * Para conectar ao backend, substituir apenas as funções
- * _fetchUsuarios(), _fetchPecas(), _fetchClientes(),
- * _saveRecord() e _deactivateRecord().
+ * Contrato híbrido: o backend usa `login` (não email), `perfil` minúsculo e
+ * `ativo` boolean. A tela mapeia perfil↔label e ativo↔status aqui.
  * ============================================================ */
 
-import { requireAuth }  from '../../core/auth.js';
+import { requireAuth, getUser } from '../../core/auth.js';
 import { initLayout }   from '../../components/layout.js';
 import { DataTable }    from '../../core/table.js';
 import { openModal, closeModal, initModals } from '../../components/modal.js';
 import { showToast }    from '../../components/toast.js';
+import { api, ApiError } from '../../core/api.js';
 
 /* ── Guard ──────────────────────────────────────────────── */
 requireAuth('../../login.html');
 
+const _u = getUser();
+if (_u && _u.role !== 'admin') {
+  window.location.replace('../dashboard.html');
+}
+
 /* ── Estado ─────────────────────────────────────────────── */
 let currentTab          = 'usuarios';
 let pendingDeactivateId = null;
+let editingId           = null;     // null = criando; id = editando
 let debounceTimer       = null;
 let table               = null;
 
-/* ── Perfis válidos do sistema ──────────────────────────── */
-const PERFIS = ['Administrador', 'Estoque', 'Vendedor', 'Caixa', 'Montador'];
+/* Cache dos registros carregados da API por aba (fonte para editar/expandir). */
+const cache = { usuarios: [], pecas: [], clientes: [] };
 
-/* ── Mock DB ────────────────────────────────────────────── */
-const DB = {
-  usuarios: [
-    { id: 1, nome: 'Samuel Freitas', email: 'samuel@automix.com',  perfil: 'Administrador', status: 'Ativo' },
-    { id: 2, nome: 'Luis Felipe',    email: 'luis@automix.com',    perfil: 'Estoque',       status: 'Ativo' },
-    { id: 3, nome: 'Carla Mendes',   email: 'carla@automix.com',   perfil: 'Vendedor',      status: 'Inativo' },
-    { id: 4, nome: 'Paulo Andrade',  email: 'paulo@automix.com',   perfil: 'Caixa',         status: 'Ativo' },
-    { id: 5, nome: 'Ricardo Costa',  email: 'ricardo@automix.com', perfil: 'Montador',      status: 'Ativo' },
-  ],
-
-  pecas: [
-    { id: 1, codigo: 'PC001', nome: 'Pneu Aro 15',      estoque: 12, minimo: 5,  preco: 320.00 },
-    { id: 2, codigo: 'PC002', nome: 'Bateria 60Ah',      estoque: 2,  minimo: 5,  preco: 450.00 },
-    { id: 3, codigo: 'PC003', nome: 'Óleo Motor 5W30',   estoque: 8,  minimo: 10, preco: 45.90  },
-    { id: 4, codigo: 'PC004', nome: 'Pastilha de Freio', estoque: 20, minimo: 8,  preco: 89.90  },
-    { id: 5, codigo: 'PC005', nome: 'Vela de Ignição',   estoque: 3,  minimo: 6,  preco: 35.00  },
-    { id: 6, codigo: 'PC006', nome: 'Filtro de Ar',      estoque: 15, minimo: 4,  preco: 28.50  },
-  ],
-
-  clientes: [
-    { id: 1, nome: 'João Silva',   telefone: '(38) 99999-9999', veiculos: [{ placa: 'ABC-1234', modelo: 'Gol 1.6' }, { placa: 'XYZ-5678', modelo: 'Clio 1.0' }] },
-    { id: 2, nome: 'Maria Souza',  telefone: '(38) 98888-8888', veiculos: [{ placa: 'QWE-2024', modelo: 'Palio 1.4' }] },
-    { id: 3, nome: 'Carlos Lima',  telefone: '(38) 97777-7777', veiculos: [] },
-    { id: 4, nome: 'Ana Paula',    telefone: '(38) 96666-6666', veiculos: [{ placa: 'MNO-3456', modelo: 'HB20 1.0' }] },
-  ],
+/* ── Perfis: label (UI) ↔ value (enum backend) ──────────── */
+const PERFIL_LABEL = {
+  admin: 'Administrador', vendedor: 'Vendedor', caixa: 'Caixa',
+  estoque: 'Estoque', montador: 'Montador',
 };
+const PERFIL_VALUE = Object.fromEntries(
+  Object.entries(PERFIL_LABEL).map(([v, l]) => [l, v])
+);
+const PERFIS = Object.values(PERFIL_LABEL);
 
 /* ── Helpers de formatação ──────────────────────────────── */
 function _fmtCurrency(value) {
@@ -70,7 +57,7 @@ function _fmtCurrency(value) {
 const COLUMNS = {
   usuarios: [
     { key: 'nome',   label: 'Nome' },
-    { key: 'email',  label: 'E-mail' },
+    { key: 'login',  label: 'Login' },
     { key: 'perfil', label: 'Perfil' },
     { key: 'status', label: 'Status' },
     { key: '_actions', label: '' },
@@ -92,15 +79,17 @@ const COLUMNS = {
   ],
 };
 
-/* ── Row renderers ───────────────────────────────────────── */
+/* ── Row renderers (recebem o objeto cru da API) ─────────── */
 const RENDERERS = {
-  usuarios: (item) => `
+  usuarios: (item) => {
+    const ativo = item.ativo !== false;
+    return `
     <td>${item.nome}</td>
-    <td class="u-text-muted">${item.email}</td>
-    <td>${item.perfil}</td>
+    <td class="u-text-muted">${item.login}</td>
+    <td>${PERFIL_LABEL[item.perfil] || item.perfil}</td>
     <td>
-      <span class="badge ${item.status === 'Ativo' ? 'badge--pago' : 'badge--cancelado'}">
-        <span class="badge__dot"></span>${item.status}
+      <span class="badge ${ativo ? 'badge--pago' : 'badge--cancelado'}">
+        <span class="badge__dot"></span>${ativo ? 'Ativo' : 'Inativo'}
       </span>
     </td>
     <td>
@@ -109,11 +98,12 @@ const RENDERERS = {
           <svg style="width:13px;height:13px" aria-hidden="true"><use href="../../icons/icons.svg#icon-edit"/></svg>
           Editar
         </button>
-        <button class="btn btn--danger btn--sm" onclick="window._confirmDeactivate(${item.id})">
+        <button class="btn btn--danger btn--sm" onclick="window._confirmDeactivate(${item.id})" ${ativo ? '' : 'disabled'}>
           Desativar
         </button>
       </div>
-    </td>`,
+    </td>`;
+  },
 
   pecas: (item) => {
     const critical = item.estoque <= item.minimo;
@@ -149,7 +139,7 @@ const RENDERERS = {
       </button>
     </td>
     <td>${item.telefone}</td>
-    <td class="u-text-muted">${item.veiculos.length} veículo(s)</td>
+    <td class="u-text-muted">${(item.veiculos || []).length} veículo(s)</td>
     <td>
       <div class="row-actions">
         <button class="btn btn--ghost btn--sm" onclick="window._editRecord(${item.id})">
@@ -193,22 +183,40 @@ function _initTabs() {
   });
 }
 
+/* ── Dados visíveis na tabela (esconde inativos onde não há coluna status) ── */
+function _displayData(tab) {
+  const data = cache[tab] || [];
+  if (tab === 'usuarios') return data;          // tem badge Ativo/Inativo
+  return data.filter(r => r.ativo !== false);    // peças/clientes: some ao desativar
+}
+
 /* ── Tabela ──────────────────────────────────────────────── */
-function _initTable(tab) {
+async function _initTable(tab) {
   const container = document.getElementById('tableContainer');
 
   table = new DataTable({
     container,
-    columns:     COLUMNS[tab],
-    rowRenderer: RENDERERS[tab],
-    onEmpty:     'Nenhum registro encontrado para esta busca.',
+    columns:      COLUMNS[tab],
+    rowRenderer:  RENDERERS[tab],
+    onEmpty:      'Carregando…',
     itemsPerPage: 10,
   });
+  table.setData([]);
 
-  table.setData(DB[tab]);
+  try {
+    cache[tab] = (await api.get(`/${tab}`)) || [];
+  } catch (err) {
+    console.error(`[cadastros] falha ao carregar ${tab}:`, err);
+    showToast(err instanceof ApiError ? err.message : `Erro ao carregar ${tab}.`, 'error');
+    cache[tab] = [];
+  }
+
+  if (tab !== currentTab) return;   // o usuário trocou de aba durante o fetch
+  table._emptyMsg = 'Nenhum registro encontrado para esta busca.';
+  table.setData(_displayData(tab));
 }
 
-/* ── Busca com debounce 300ms ────────────────────────────── */
+/* ── Busca com debounce 300ms (client-side) ──────────────── */
 function _initSearch() {
   document.getElementById('tableSearch').addEventListener('input', e => {
     clearTimeout(debounceTimer);
@@ -220,30 +228,24 @@ function _initSearch() {
 
 /* ── Expand veículos (cliente) ───────────────────────────── */
 window._toggleVehicles = function(clienteId, btn) {
-  const cliente = DB.clientes.find(c => c.id === clienteId);
+  const cliente = cache.clientes.find(c => c.id === clienteId);
   if (!cliente) return;
 
   const isExpanded = btn.classList.toggle('expanded');
   btn.setAttribute('aria-expanded', String(isExpanded));
 
   const existingRow = document.getElementById(`vehicles-row-${clienteId}`);
-
-  if (!isExpanded) {
-    existingRow?.remove();
-    return;
-  }
+  if (!isExpanded) { existingRow?.remove(); return; }
 
   const tr = btn.closest('tr');
   const colspan = COLUMNS.clientes.length;
+  const veiculos = cliente.veiculos || [];
 
-  const vehicleHTML = cliente.veiculos.length
-    ? cliente.veiculos.map((v, idx) => `
+  const vehicleHTML = veiculos.length
+    ? veiculos.map((v) => `
         <div class="vehicle-item">
           <svg aria-hidden="true"><use href="../../icons/icons.svg#icon-car"/></svg>
-          <strong>${v.placa}</strong> — ${v.modelo}
-          <button class="btn btn--ghost btn--sm vehicle-remove-btn" onclick="window._removeVehicle(${clienteId}, ${idx})" title="Desvincular veículo">
-            <svg style="width:14px;height:14px" aria-hidden="true"><use href="../../icons/icons.svg#icon-x"/></svg>
-          </button>
+          <strong>${v.placa}</strong> — ${v.modelo || '—'}${v.ano ? ` · ${v.ano}` : ''}
         </div>`).join('')
     : `<p class="u-text-muted" style="font-size:var(--font-size-sm)">Nenhum veículo vinculado.</p>`;
 
@@ -254,48 +256,15 @@ window._toggleVehicles = function(clienteId, btn) {
     <td colspan="${colspan}">
       <div class="vehicle-expand">
         <div class="vehicle-list">${vehicleHTML}</div>
-        <button class="btn btn--accent btn--sm" onclick="window._addVehicle(${clienteId})">
-          <svg style="width:13px;height:13px" aria-hidden="true"><use href="../../icons/icons.svg#icon-plus"/></svg>
-          Adicionar Veículo
-        </button>
       </div>
     </td>`;
 
   tr.insertAdjacentElement('afterend', vehicleRow);
 };
 
-window._addVehicle = function(clienteId) {
-  showToast('Funcionalidade de adicionar veículo em desenvolvimento.', 'info');
-};
-
-/* ── Remover veículo do cliente ─────────────────────────── */
-window._removeVehicle = function(clienteId, vehicleIndex) {
-  const cliente = DB.clientes.find(c => c.id === clienteId);
-  if (!cliente) return;
-
-  const veiculo = cliente.veiculos[vehicleIndex];
-  if (!veiculo) return;
-
-  cliente.veiculos.splice(vehicleIndex, 1);
-
-  // Re-renderiza a expand row
-  const expandRow = document.getElementById(`vehicles-row-${clienteId}`);
-  if (expandRow) expandRow.remove();
-
-  const btn = document.getElementById(`expandBtn-${clienteId}`);
-  if (btn) {
-    btn.classList.remove('expanded');
-    btn.setAttribute('aria-expanded', 'false');
-  }
-
-  // Atualiza a tabela inteira (contagem de veículos muda)
-  _initTable(currentTab);
-
-  showToast(`Veículo ${veiculo.placa} desvinculado com sucesso.`, 'success');
-};
-
 /* ── Modal Criar ─────────────────────────────────────────── */
 function _openCreateModal() {
+  editingId = null;
   document.getElementById('modalCadastroTitle').textContent = `Novo ${_tabLabel()}`;
   _renderFormFields(null);
   openModal('modalCadastro');
@@ -303,29 +272,33 @@ function _openCreateModal() {
 
 /* ── Modal Editar ────────────────────────────────────────── */
 window._editRecord = function(id) {
-  const item = DB[currentTab].find(i => i.id === id);
+  const item = cache[currentTab].find(i => i.id === id);
   if (!item) return;
+  editingId = id;
   document.getElementById('modalCadastroTitle').textContent = `Editar ${_tabLabel()}`;
   _renderFormFields(item);
   openModal('modalCadastro');
 };
 
-/* ── Campos dinâmicos por tab ────────────────────────────── */
+/* ── Campos dinâmicos por tab (cria vs edita) ────────────── */
 function _renderFormFields(item) {
   const form = document.getElementById('modalForm');
+  const editando = item !== null;
 
   const fieldDefs = {
     usuarios: [
-      { id: 'f-nome',   label: 'Nome completo', type: 'text',   value: item?.nome   || '' },
-      { id: 'f-email',  label: 'E-mail',         type: 'email',  value: item?.email  || '' },
-      { id: 'f-perfil', label: 'Perfil',          type: 'select', value: item?.perfil || '', options: PERFIS },
+      { id: 'f-nome',  label: 'Nome completo', type: 'text', value: item?.nome  || '' },
+      { id: 'f-login', label: 'Login', type: 'text', value: item?.login || '', disabled: editando },
+      // senha só na criação (edição de senha é via reset dedicado)
+      ...(editando ? [] : [{ id: 'f-senha', label: 'Senha', type: 'password', value: '' }]),
+      { id: 'f-perfil', label: 'Perfil', type: 'select', value: item ? PERFIL_LABEL[item.perfil] : '', options: PERFIS },
     ],
     pecas: [
       { id: 'f-codigo',  label: 'Código',        type: 'text',   value: item?.codigo  || '' },
       { id: 'f-nome',    label: 'Nome da peça',   type: 'text',   value: item?.nome    || '' },
       { id: 'f-preco',   label: 'Preço (R$)',      type: 'number', value: item?.preco   ?? '', step: '0.01', min: '0' },
-      { id: 'f-estoque', label: 'Estoque atual',   type: 'number', value: item?.estoque ?? '' },
-      { id: 'f-minimo',  label: 'Qtd. Mínima',     type: 'number', value: item?.minimo  ?? '' },
+      { id: 'f-estoque', label: 'Estoque atual',   type: 'number', value: item?.estoque ?? '', min: '0' },
+      { id: 'f-minimo',  label: 'Qtd. Mínima',     type: 'number', value: item?.minimo  ?? '', min: '0' },
     ],
     clientes: [
       { id: 'f-nome',     label: 'Nome do cliente', type: 'text', value: item?.nome     || '' },
@@ -355,6 +328,7 @@ function _renderFormFields(item) {
           placeholder=" "
           value="${f.value}"
           autocomplete="off"
+          ${f.disabled ? 'disabled' : ''}
           ${f.step ? `step="${f.step}"` : ''}
           ${f.min  ? `min="${f.min}"` : ''}
         >
@@ -364,14 +338,14 @@ function _renderFormFields(item) {
   }).join('');
 }
 
-/* ── Salvar ──────────────────────────────────────────────── */
-window.saveCadastro = function() {
+/* ── Salvar (criar ou editar via API) ────────────────────── */
+window.saveCadastro = async function() {
   const inputs = document.querySelectorAll('#modalForm .field__input, #modalForm .field__select');
   let valid = true;
 
   inputs.forEach(input => {
     const field = input.closest('.field');
-    if (!input.value.trim()) {
+    if (!input.disabled && !input.value.trim()) {
       field.classList.add('field--error');
       valid = false;
     } else {
@@ -384,32 +358,90 @@ window.saveCadastro = function() {
     return;
   }
 
+  const payload = _buildPayload();
   const btn = document.getElementById('btnSalvar');
   btn.classList.add('btn--loading');
   btn.disabled = true;
 
-  setTimeout(() => {
+  try {
+    if (editingId === null) {
+      await api.post(`/${currentTab}`, payload);
+    } else {
+      await api.put(`/${currentTab}/${editingId}`, payload);
+    }
+    closeModal('modalCadastro');
+    showToast(`${_tabLabel()} ${editingId === null ? 'criado' : 'salvo'} com sucesso.`, 'success');
+    await _initTable(currentTab);
+  } catch (err) {
+    console.error('[cadastros] falha ao salvar:', err);
+    showToast(err instanceof ApiError ? err.message : 'Erro ao salvar.', 'error');
+  } finally {
     btn.classList.remove('btn--loading');
     btn.disabled = false;
-    closeModal('modalCadastro');
-    showToast(`${_tabLabel()} salvo com sucesso.`, 'success');
-  }, 800);
+  }
 };
+
+/* Monta o body conforme a aba e se é criação ou edição. */
+function _buildPayload() {
+  const val = (id) => document.getElementById(id)?.value.trim() ?? '';
+  const num = (id) => Number(document.getElementById(id)?.value);
+
+  if (currentTab === 'usuarios') {
+    const perfil = PERFIL_VALUE[val('f-perfil')] || val('f-perfil');
+    if (editingId === null) {
+      return { nome: val('f-nome'), login: val('f-login'), senha: val('f-senha'), perfil };
+    }
+    return { nome: val('f-nome'), perfil };   // login/senha não mudam por aqui
+  }
+
+  if (currentTab === 'pecas') {
+    return {
+      codigo: val('f-codigo'),
+      nome:   val('f-nome'),
+      preco:  num('f-preco'),
+      estoque: num('f-estoque'),
+      minimo:  num('f-minimo'),
+    };
+  }
+
+  // clientes
+  return { nome: val('f-nome'), telefone: val('f-telefone') };
+}
 
 window.closeCadastroModal = () => closeModal('modalCadastro');
 
-/* ── Desativar ───────────────────────────────────────────── */
+/* ── Desativar (DELETE usuário ; PUT ativo:false peça/cliente) ── */
 window._confirmDeactivate = function(id) {
   pendingDeactivateId = id;
   openModal('modalConfirm');
 };
 
-window.confirmDeactivate = function() {
-  if (pendingDeactivateId !== null) {
+window.confirmDeactivate = async function() {
+  if (pendingDeactivateId === null) return;
+  const id  = pendingDeactivateId;
+  const tab = currentTab;
+
+  const btn = document.getElementById('btnConfirmDeactivate');
+  btn.classList.add('btn--loading');
+  btn.disabled = true;
+
+  try {
+    if (tab === 'usuarios') {
+      await api.del(`/usuarios/${id}`);
+    } else {
+      await api.put(`/${tab}/${id}`, { ativo: false });
+    }
+    closeModal('modalConfirm');
     showToast('Registro desativado com sucesso.', 'warning');
     pendingDeactivateId = null;
+    await _initTable(tab);
+  } catch (err) {
+    console.error('[cadastros] falha ao desativar:', err);
+    showToast(err instanceof ApiError ? err.message : 'Erro ao desativar.', 'error');
+  } finally {
+    btn.classList.remove('btn--loading');
+    btn.disabled = false;
   }
-  closeModal('modalConfirm');
 };
 
 window.closeConfirmModal = () => closeModal('modalConfirm');

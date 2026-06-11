@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { verifyAccessToken } from "../services/authService";
 import logger from "../lib/logger";
+import { getStore } from "../lib/requestContext";
 
 export const authMiddleware = (
   req: Request,
@@ -22,6 +23,8 @@ export const authMiddleware = (
       login: payload.login,
       perfil: payload.perfil,
     };
+    const store = getStore();
+    if (store) store.usuarioId = payload.id;
     logger.debug({ userId: payload.id, path: req.path }, "Token validado");
     return next();
   } catch (error) {

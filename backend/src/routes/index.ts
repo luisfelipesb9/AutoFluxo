@@ -8,6 +8,9 @@ import pedidosRouter from "./pedidos";
 import caixaRouter from "./caixa";
 import estoqueRouter from "./estoque";
 import montagemRouter from "./montagem";
+import searchRouter from "./search";
+import relatoriosRouter from "./relatorios";
+import adminRouter from "./admin";
 import { getRoot } from "../controllers/rootController";
 import { authMiddleware } from "../middleware/authMiddleware";
 
@@ -35,5 +38,10 @@ router.use("/pedidos", pedidosRouter);
 router.use("/pedidos", caixaRouter);
 router.use("/pedidos", estoqueRouter);
 router.use("/pedidos", montagemRouter);
+
+// Módulo de IA, relatórios e administração (RBAC admin nas próprias rotas).
+router.use("/search", searchRouter);
+router.use("/relatorios", relatoriosRouter);
+router.use("/admin", adminRouter);
 
 export default router;

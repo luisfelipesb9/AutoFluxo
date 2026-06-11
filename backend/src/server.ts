@@ -10,6 +10,7 @@ import { apiLimiter } from "./middleware/rateLimiter";
 import { validateEnv } from "./config/env";
 import logger from "./lib/logger";
 import { initializeDatabase } from "./lib/database";
+import { requestContextMiddleware } from "./lib/requestContext";
 
 dotenv.config();
 
@@ -21,11 +22,20 @@ async function bootstrap(): Promise<express.Application> {
 
   const app = express();
 
+  // Confia no proxy reverso para resolver o IP real do cliente (X-Forwarded-For).
+  app.set("trust proxy", true);
+
   // Middlewares de segurança
   app.use(helmet());
+  // CORS_ORIGIN aceita uma lista separada por vírgula, p.ex.:
+  // "http://localhost:3000,http://192.168.1.13:3000"
+  const corsOrigins = (process.env.CORS_ORIGIN ?? "http://localhost:3000")
+    .split(",")
+    .map((o) => o.trim())
+    .filter(Boolean);
   app.use(
     cors({
-      origin: process.env.CORS_ORIGIN ?? "http://localhost:3000",
+      origin: corsOrigins,
       credentials: true,
     })
   );
@@ -38,6 +48,9 @@ async function bootstrap(): Promise<express.Application> {
 
   // Body parsing
   app.use(express.json({ limit: "10mb" }));
+
+  // Contexto de auditoria por requisição (IP + usuário) — antes das rotas.
+  app.use(requestContextMiddleware);
 
   // Rotas
   app.use("/api", rootRouter);

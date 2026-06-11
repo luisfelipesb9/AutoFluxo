@@ -1,6 +1,18 @@
 import "reflect-metadata";
 import { DataSource } from "typeorm";
+import { types as pgTypes } from "pg";
 import logger from "../lib/logger";
+
+// Política de timezone (raiz): as colunas de data são `timestamp without time
+// zone` e o Postgres (container em UTC) armazena os valores em UTC. Sem isto, o
+// driver pg lê esse `timestamp` no fuso do HOST (ex.: -03) e desloca a saída em
+// +3h (ex.: um log de 03:29Z volta como 06:29Z; R1 devolvia 03:00Z em vez de
+// 00:00Z). Forçamos a leitura como UTC. OID 1114 = `timestamp` sem tz.
+// Vale para TODA leitura (TypeORM e AppDataSource.query), pois o registry de
+// tipos do pg é global. Sub-segundos abaixo de ms são truncados pelo JS Date.
+pgTypes.setTypeParser(1114, (value: string) =>
+  new Date(value.replace(" ", "T") + "Z")
+);
 import { User } from "../entities/User";
 import { RefreshToken } from "../entities/RefreshToken";
 import { Cliente } from "../entities/Cliente";
