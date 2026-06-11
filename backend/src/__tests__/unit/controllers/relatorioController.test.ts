@@ -57,6 +57,8 @@ describe("GET /relatorios/estoque-critico", () => {
     expect(res.headers["content-disposition"]).toContain(
       "relatorio_estoque-critico_"
     );
+    // BOM UTF-8 no início para o Excel abrir acentos corretamente.
+    expect(res.text.charCodeAt(0)).toBe(0xfeff);
     expect(res.text).toContain("qtd_faltante");
   });
 
