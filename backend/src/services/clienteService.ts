@@ -3,6 +3,7 @@ import { Cliente } from "../entities/Cliente";
 import { Veiculo } from "../entities/Veiculo";
 import { AppError } from "../lib/AppError";
 import { registrarLog } from "./logService";
+import { AuditAction, AuditEntity } from "../lib/auditActions";
 import {
   CreateClienteRequest,
   UpdateClienteRequest,
@@ -87,8 +88,8 @@ export const criarCliente = async (
 
   await registrarLog({
     usuario_id: usuarioId ?? null,
-    acao: "cliente.criar",
-    entidade: "cliente",
+    acao: AuditAction.CLIENTE_CRIAR,
+    entidade: AuditEntity.CLIENTE,
     entidade_id: salvo.id,
     detalhe: `Cliente "${salvo.nome}" criado`,
   });
@@ -116,8 +117,8 @@ export const atualizarCliente = async (
 
   await registrarLog({
     usuario_id: usuarioId ?? null,
-    acao: "cliente.atualizar",
-    entidade: "cliente",
+    acao: AuditAction.CLIENTE_ATUALIZAR,
+    entidade: AuditEntity.CLIENTE,
     entidade_id: salvo.id,
     detalhe: `Cliente "${salvo.nome}" atualizado`,
   });
@@ -154,8 +155,8 @@ export const adicionarVeiculo = async (
 
   await registrarLog({
     usuario_id: usuarioId ?? null,
-    acao: "veiculo.criar",
-    entidade: "veiculo",
+    acao: AuditAction.VEICULO_CRIAR,
+    entidade: AuditEntity.VEICULO,
     entidade_id: salvo.id,
     detalhe: `Veículo "${salvo.placa}" adicionado ao cliente ${clienteId}`,
   });

@@ -3,6 +3,7 @@ import { Peca } from "../entities/Peca";
 import { AppError } from "../lib/AppError";
 import { registrarLog } from "./logService";
 import { estoqueCriticoWhere } from "../lib/estoqueCritico";
+import { AuditAction, AuditEntity } from "../lib/auditActions";
 import type { CreatePecaRequest, UpdatePecaRequest } from "../schemas/peca";
 
 /**
@@ -85,8 +86,8 @@ export const criarPeca = async (
 
   await registrarLog({
     usuario_id: usuarioId,
-    acao: "peca.criar",
-    entidade: "peca",
+    acao: AuditAction.PECA_CRIAR,
+    entidade: AuditEntity.PECA,
     entidade_id: salva.id,
     detalhe: `Peça ${salva.codigo} criada`,
   });
@@ -124,8 +125,8 @@ export const atualizarPeca = async (
 
   await registrarLog({
     usuario_id: usuarioId,
-    acao: "peca.atualizar",
-    entidade: "peca",
+    acao: AuditAction.PECA_ATUALIZAR,
+    entidade: AuditEntity.PECA,
     entidade_id: salva.id,
     detalhe: `Peça ${salva.codigo} atualizada`,
   });

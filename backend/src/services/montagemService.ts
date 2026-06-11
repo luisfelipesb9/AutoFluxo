@@ -4,6 +4,7 @@ import { PedidoStatus } from "../entities/enums";
 import { assertTransition } from "../lib/state-machine";
 import { getPedidoOrThrow } from "./pedidoQuery";
 import { registrarLog } from "./logService";
+import { AuditAction, AuditEntity } from "../lib/auditActions";
 
 /**
  * Operações de MONTAGEM no ciclo de vida do Pedido (Ticket 5).
@@ -51,8 +52,8 @@ export const iniciarMontagem = async (
 
   await registrarLog({
     usuario_id: montadorId,
-    acao: "pedido.iniciar-montagem",
-    entidade: "pedido",
+    acao: AuditAction.PEDIDO_INICIAR_MONTAGEM,
+    entidade: AuditEntity.PEDIDO,
     entidade_id: id,
   });
 
@@ -91,8 +92,8 @@ export const concluirPedido = async (
 
   await registrarLog({
     usuario_id: montadorId,
-    acao: "pedido.concluir",
-    entidade: "pedido",
+    acao: AuditAction.PEDIDO_CONCLUIR,
+    entidade: AuditEntity.PEDIDO,
     entidade_id: id,
   });
 

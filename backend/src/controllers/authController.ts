@@ -8,6 +8,7 @@ import {
 import { loginSchema, refreshTokenSchema } from "../schemas/auth";
 import { registrarLog } from "../services/logService";
 import { sanitizeDetalhe } from "../lib/requestContext";
+import { AuditAction, AuditEntity } from "../lib/auditActions";
 import logger from "../lib/logger";
 
 export const login = async (req: Request, res: Response) => {
@@ -22,8 +23,8 @@ export const login = async (req: Request, res: Response) => {
       // registramos usuario_id=null + IP (do contexto) e o login no detalhe.
       await registrarLog({
         usuario_id: null,
-        acao: "login.falha",
-        entidade: "auth",
+        acao: AuditAction.LOGIN_FALHA,
+        entidade: AuditEntity.AUTH,
         detalhe: sanitizeDetalhe({ login, motivo: "usuario_inexistente" }),
       });
       return res.status(401).json({ error: "Credenciais inválidas" });
@@ -34,8 +35,8 @@ export const login = async (req: Request, res: Response) => {
       logger.warn({ userId: user.id, login }, "Tentativa de login com senha inválida");
       await registrarLog({
         usuario_id: null,
-        acao: "login.falha",
-        entidade: "auth",
+        acao: AuditAction.LOGIN_FALHA,
+        entidade: AuditEntity.AUTH,
         detalhe: sanitizeDetalhe({ login, motivo: "senha_invalida" }),
       });
       return res.status(401).json({ error: "Credenciais inválidas" });
@@ -46,8 +47,8 @@ export const login = async (req: Request, res: Response) => {
 
     await registrarLog({
       usuario_id: user.id,
-      acao: "login.sucesso",
-      entidade: "auth",
+      acao: AuditAction.LOGIN_SUCESSO,
+      entidade: AuditEntity.AUTH,
       entidade_id: user.id,
       detalhe: sanitizeDetalhe({ login }),
     });
@@ -80,8 +81,8 @@ export const logout = async (req: Request, res: Response) => {
 
     await invalidateRefreshToken(refreshToken);
     await registrarLog({
-      acao: "login.logout",
-      entidade: "auth",
+      acao: AuditAction.LOGIN_LOGOUT,
+      entidade: AuditEntity.AUTH,
     });
     logger.info("Logout realizado");
     return res.status(204).send();

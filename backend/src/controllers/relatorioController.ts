@@ -10,12 +10,13 @@ import {
 import { sendReport } from "../lib/csv";
 import { registrarLog } from "../services/logService";
 import { sanitizeDetalhe } from "../lib/requestContext";
+import { AuditEntity, relatorioAction } from "../lib/auditActions";
 
 // Auditoria de acesso a relatório (usuário/IP vêm do contexto da requisição).
 const auditarAcesso = (tipo: string, filtros: unknown): Promise<void> =>
   registrarLog({
-    acao: `relatorio.${tipo}`,
-    entidade: "relatorio",
+    acao: relatorioAction(tipo),
+    entidade: AuditEntity.RELATORIO,
     detalhe: sanitizeDetalhe(filtros),
   });
 

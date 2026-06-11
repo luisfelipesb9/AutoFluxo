@@ -3,6 +3,7 @@ import { AppError } from "../lib/AppError";
 import { assertSafeSelect, injectLimit } from "../lib/sqlGuard";
 import { registrarLog } from "./logService";
 import { sanitizeDetalhe } from "../lib/requestContext";
+import { AuditAction, AuditEntity } from "../lib/auditActions";
 import logger from "../lib/logger";
 
 const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
@@ -135,8 +136,8 @@ export const buscarPorLinguagemNatural = async (
   }
 
   await registrarLog({
-    acao: "search.nl",
-    entidade: "search",
+    acao: AuditAction.SEARCH_NL,
+    entidade: AuditEntity.SEARCH,
     detalhe: sanitizeDetalhe({ pergunta, sql }),
   });
 

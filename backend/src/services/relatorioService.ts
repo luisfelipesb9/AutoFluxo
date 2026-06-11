@@ -1,5 +1,6 @@
 import { AppDataSource } from "../lib/database";
 import { estoqueCriticoWhere } from "../lib/estoqueCritico";
+import { AuditEntity } from "../lib/auditActions";
 import {
   VendasQuery,
   PecasMaisVendidasQuery,
@@ -125,7 +126,7 @@ export const relatorioPerformance = async (
        FROM logs_acao l
        JOIN usuarios u ON u.id = l.usuario_id
       WHERE l.criado_em >= $1::date AND l.criado_em < ($2::date + interval '1 day')
-        AND l.entidade = 'pedido'
+        AND l.entidade = '${AuditEntity.PEDIDO}'
         AND u.perfil IN ('vendedor', 'estoque', 'montador')
       GROUP BY u.perfil, u.id, u.nome
       ORDER BY u.perfil ASC, total_acoes DESC`,

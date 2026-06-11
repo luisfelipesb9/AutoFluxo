@@ -7,6 +7,7 @@ import { PedidoStatus, TipoMovimentacao } from "../entities/enums";
 import { AppError } from "../lib/AppError";
 import { assertTransition } from "../lib/state-machine";
 import { registrarLog } from "./logService";
+import { AuditAction, AuditEntity } from "../lib/auditActions";
 import { getPedidoOrThrow, getPedidoWithItens } from "./pedidoQuery";
 
 /**
@@ -42,8 +43,8 @@ export const iniciarSeparacao = async (
 
   await registrarLog({
     usuario_id: usuarioId,
-    acao: "pedido.iniciar-separacao",
-    entidade: "pedido",
+    acao: AuditAction.PEDIDO_INICIAR_SEPARACAO,
+    entidade: AuditEntity.PEDIDO,
     entidade_id: pedido.id,
   });
 
@@ -121,8 +122,8 @@ export const separarItem = async (
 
     await registrarLog({
       usuario_id: usuarioId,
-      acao: "pedido.separar-item",
-      entidade: "pedido",
+      acao: AuditAction.PEDIDO_SEPARAR_ITEM,
+      entidade: AuditEntity.PEDIDO,
       entidade_id: id,
       detalhe: `item ${item.id} peça ${peca.id} qtd ${qtd_confirmada}`,
     });
@@ -164,8 +165,8 @@ export const enviarMontagem = async (
 
   await registrarLog({
     usuario_id: usuarioId,
-    acao: "pedido.enviar-montagem",
-    entidade: "pedido",
+    acao: AuditAction.PEDIDO_ENVIAR_MONTAGEM,
+    entidade: AuditEntity.PEDIDO,
     entidade_id: pedido.id,
   });
 
@@ -194,8 +195,8 @@ export const devolverCaixa = async (
 
   await registrarLog({
     usuario_id: usuarioId,
-    acao: "pedido.devolver-caixa",
-    entidade: "pedido",
+    acao: AuditAction.PEDIDO_DEVOLVER_CAIXA,
+    entidade: AuditEntity.PEDIDO,
     entidade_id: pedido.id,
     detalhe: motivo,
   });
