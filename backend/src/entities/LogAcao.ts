@@ -25,6 +25,9 @@ export class LogAcao {
   @Column({ type: "text", nullable: true })
   detalhe?: string;
 
+  @Column({ type: "varchar", length: 45, nullable: true })
+  ip?: string;
+
   @CreateDateColumn({ name: "criado_em" })
   criado_em!: Date;
 }

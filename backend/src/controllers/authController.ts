@@ -6,6 +6,8 @@ import {
   invalidateRefreshToken,
 } from "../services/authService";
 import { loginSchema, refreshTokenSchema } from "../schemas/auth";
+import { registrarLog } from "../services/logService";
+import { sanitizeDetalhe } from "../lib/requestContext";
 import logger from "../lib/logger";
 
 export const login = async (req: Request, res: Response) => {
@@ -16,24 +18,51 @@ export const login = async (req: Request, res: Response) => {
     const user = await findUserByLogin(login);
     if (!user) {
       logger.warn({ login }, "Tentativa de login com usuário inexistente");
+      // Falhas de login não vinculam usuario_id (mesmo login existente):
+      // registramos usuario_id=null + IP (do contexto) e o login no detalhe.
+      await registrarLog({
+        usuario_id: null,
+        acao: "login.falha",
+        entidade: "auth",
+        detalhe: sanitizeDetalhe({ login, motivo: "usuario_inexistente" }),
+      });
       return res.status(401).json({ error: "Credenciais inválidas" });
     }
 
     const senhaValida = await verifyPassword(senha, user.senhaHash);
     if (!senhaValida) {
       logger.warn({ userId: user.id, login }, "Tentativa de login com senha inválida");
+      await registrarLog({
+        usuario_id: null,
+        acao: "login.falha",
+        entidade: "auth",
+        detalhe: sanitizeDetalhe({ login, motivo: "senha_invalida" }),
+      });
       return res.status(401).json({ error: "Credenciais inválidas" });
     }
 
     const accessToken = generateAccessToken(user);
     const refreshToken = await issueRefreshToken(user.id);
 
+    await registrarLog({
+      usuario_id: user.id,
+      acao: "login.sucesso",
+      entidade: "auth",
+      entidade_id: user.id,
+      detalhe: sanitizeDetalhe({ login }),
+    });
     logger.info({ userId: user.id, login }, "Login realizado com sucesso");
 
     return res.json({
       accessToken,
       refreshToken,
       expiresIn: 8 * 60 * 60,
+      usuario: {
+        id: user.id,
+        nome: user.nome,
+        login: user.login,
+        perfil: user.perfil,
+      },
     });
   } catch (error) {
     if (error instanceof Error) {
@@ -50,6 +79,10 @@ export const logout = async (req: Request, res: Response) => {
     const { refreshToken } = validatedData;
 
     await invalidateRefreshToken(refreshToken);
+    await registrarLog({
+      acao: "login.logout",
+      entidade: "auth",
+    });
     logger.info("Logout realizado");
     return res.status(204).send();
   } catch (error) {
