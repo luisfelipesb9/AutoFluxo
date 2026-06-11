@@ -6,14 +6,24 @@ import {
   criar,
   atualizar,
 } from "../controllers/pecaController";
-import { requireAdmin } from "../middleware/rbac";
+import { requireAdmin, requireRole } from "../middleware/rbac";
 
 const router = Router();
 
-router.get("/", requireAdmin, listar);
+// Leitura liberada para os papéis que precisam consultar peças (ex.: vendedor
+// no novo pedido, estoque na separação). Escrita continua restrita ao admin.
+const podeConsultar = requireRole(
+  "admin",
+  "vendedor",
+  "caixa",
+  "estoque",
+  "montador"
+);
+
+router.get("/", podeConsultar, listar);
 // Declarada ANTES de "/:id" para não ser capturada como parâmetro.
-router.get("/estoque-critico", requireAdmin, estoqueCritico);
-router.get("/:id", requireAdmin, buscarPorId);
+router.get("/estoque-critico", podeConsultar, estoqueCritico);
+router.get("/:id", podeConsultar, buscarPorId);
 router.post("/", requireAdmin, criar);
 router.put("/:id", requireAdmin, atualizar);
 

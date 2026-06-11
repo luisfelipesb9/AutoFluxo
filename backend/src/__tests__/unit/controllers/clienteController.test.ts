@@ -53,11 +53,13 @@ describe("clienteController routes", () => {
       expect(res.body[0].veiculos[0].placa).toBe("ABC1D23");
     });
 
-    it("retorna 403 para usuário não-admin", async () => {
+    it("permite leitura para papéis não-admin (ex.: vendedor no novo pedido)", async () => {
+      (clienteService.listarClientes as jest.Mock).mockResolvedValue([]);
+
       const res = await request(buildApp(naoAdmin)).get("/api/clientes");
 
-      expect(res.status).toBe(403);
-      expect(clienteService.listarClientes).not.toHaveBeenCalled();
+      expect(res.status).toBe(200);
+      expect(clienteService.listarClientes).toHaveBeenCalled();
     });
   });
 
