@@ -7,6 +7,7 @@ import { ItemPedido } from "../entities/ItemPedido";
 import { PedidoStatus } from "../entities/enums";
 import { AppError } from "../lib/AppError";
 import { registrarLog } from "./logService";
+import { AuditAction, AuditEntity } from "../lib/auditActions";
 import { getPedidoWithItens } from "./pedidoQuery";
 import type { CreatePedidoRequest } from "../schemas/pedido";
 
@@ -121,8 +122,8 @@ export const criarPedido = async (
   // 6. Auditoria (nunca quebra o fluxo).
   await registrarLog({
     usuario_id: vendedorId,
-    acao: "pedido.criar",
-    entidade: "pedido",
+    acao: AuditAction.PEDIDO_CRIAR,
+    entidade: AuditEntity.PEDIDO,
     entidade_id: pedidoId,
   });
 

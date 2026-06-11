@@ -61,7 +61,7 @@ describe("relatorioService", () => {
 
     const sql = queryMock.mock.calls[0][0];
     expect(sql).toContain("(minimo - estoque)");
-    expect(sql).toContain("estoque < minimo");
+    expect(sql).toContain("ativo = true AND estoque < minimo");
   });
 
   it("historicoCliente: usa celular como telefone e repassa placa", async () => {
@@ -85,15 +85,19 @@ describe("relatorioService", () => {
     expect(queryMock.mock.calls[0][0]).toContain("GROUP BY status");
   });
 
-  it("performance: filtra perfis operacionais a partir de logs_acao", async () => {
+  it("performance: deriva dos dados de negócio (pedidos + movimentações), não de logs_acao", async () => {
     await svc.relatorioPerformance({
       inicio: new Date(),
       fim: new Date(),
     } as never);
 
-    const sql = queryMock.mock.calls[0][0];
-    expect(sql).toContain("FROM logs_acao");
-    expect(sql).toContain("perfil IN ('vendedor', 'estoque', 'montador')");
+    const [sql, params] = queryMock.mock.calls[0];
+    expect(sql).not.toContain("logs_acao");
+    expect(sql).toContain("p.vendedor_id = u.id"); // vendedor: pedidos vendidos
+    expect(sql).toContain("p.montador_id = u.id"); // montador: montagens
+    expect(sql).toContain("movimentacao_estoque"); // estoque: movimentações
+    expect(sql).toContain("p.concluido_em");
+    expect(params).toHaveLength(2);
   });
 
   it("passa datas de período como string YYYY-MM-DD (evita shift de fuso)", async () => {

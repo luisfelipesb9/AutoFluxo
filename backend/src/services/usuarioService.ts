@@ -2,6 +2,7 @@ import { AppDataSource } from "../lib/database";
 import { User } from "../entities/User";
 import { AppError } from "../lib/AppError";
 import { registrarLog } from "../services/logService";
+import { AuditAction, AuditEntity } from "../lib/auditActions";
 import { hashPassword } from "../services/userService";
 import {
   CreateUsuarioRequest,
@@ -77,8 +78,8 @@ export const criarUsuario = async (
 
   await registrarLog({
     usuario_id: autorId,
-    acao: "usuario.criar",
-    entidade: "usuario",
+    acao: AuditAction.USUARIO_CRIAR,
+    entidade: AuditEntity.USUARIO,
     entidade_id: salvo.id,
   });
 
@@ -105,8 +106,8 @@ export const atualizarUsuario = async (
 
   await registrarLog({
     usuario_id: autorId,
-    acao: "usuario.atualizar",
-    entidade: "usuario",
+    acao: AuditAction.USUARIO_ATUALIZAR,
+    entidade: AuditEntity.USUARIO,
     entidade_id: salvo.id,
   });
 
@@ -130,8 +131,8 @@ export const resetarSenha = async (
 
   await registrarLog({
     usuario_id: autorId,
-    acao: "usuario.reset-senha",
-    entidade: "usuario",
+    acao: AuditAction.USUARIO_RESET_SENHA,
+    entidade: AuditEntity.USUARIO,
     entidade_id: usuario.id,
   });
 };
@@ -153,8 +154,8 @@ export const desativarUsuario = async (
 
   await registrarLog({
     usuario_id: autorId,
-    acao: "usuario.desativar",
-    entidade: "usuario",
+    acao: AuditAction.USUARIO_DESATIVAR,
+    entidade: AuditEntity.USUARIO,
     entidade_id: usuario.id,
   });
 };

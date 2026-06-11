@@ -1,4 +1,5 @@
 import { AppDataSource } from "../lib/database";
+import { estoqueCriticoWhere } from "../lib/estoqueCritico";
 import {
   VendasQuery,
   PecasMaisVendidasQuery,
@@ -58,13 +59,15 @@ export const relatorioPecasMaisVendidas = async (
   );
 };
 
-// R3 — Estoque crítico: peças ativas abaixo do mínimo. qtd_faltante = minimo - estoque.
+// R3 — Estoque crítico: peças ativas abaixo do mínimo. qtd_faltante = minimo -
+// estoque. Mesma regra do GET /api/pecas/estoque-critico (lib/estoqueCritico);
+// aqui é a versão admin: subset + qtd_faltante, ordenada por quem falta mais.
 export const relatorioEstoqueCritico = async (): Promise<Row[]> => {
   return AppDataSource.query(
     `SELECT id, codigo, nome, estoque, minimo,
             (minimo - estoque) AS qtd_faltante
        FROM pecas
-      WHERE ativo = true AND estoque < minimo
+      WHERE ${estoqueCriticoWhere()}
       ORDER BY qtd_faltante DESC`
   );
 };
@@ -111,21 +114,53 @@ export const relatorioPedidosStatus = async (
   );
 };
 
-// R6 — Performance dos operadores no período, agrupada por perfil.
+// R6 — Performance dos operadores no período, agrupada por perfil. Deriva dos
+// DADOS DE NEGÓCIO (não de logs_acao, que é frágil a expurgo e não cobre ações
+// pré-auditoria): vendedor = pedidos vendidos (vendedor_id); montador =
+// montagens concluídas (montador_id + concluido_em); estoque = movimentações
+// de estoque (usuario_id). LEFT JOIN inclui operadores ativos com total 0 no
+// período. `total` é a métrica de produtividade natural de cada perfil.
 export const relatorioPerformance = async (
   q: PerformanceQuery
 ): Promise<Row[]> => {
   return AppDataSource.query(
-    `SELECT u.perfil, u.id AS usuario_id, u.nome,
-            COUNT(*)::int AS total_acoes,
-            COUNT(DISTINCT l.entidade_id)::int AS pedidos
-       FROM logs_acao l
-       JOIN usuarios u ON u.id = l.usuario_id
-      WHERE l.criado_em >= $1::date AND l.criado_em < ($2::date + interval '1 day')
-        AND l.entidade = 'pedido'
-        AND u.perfil IN ('vendedor', 'estoque', 'montador')
-      GROUP BY u.perfil, u.id, u.nome
-      ORDER BY u.perfil ASC, total_acoes DESC`,
+    `SELECT perfil, usuario_id, nome, total
+       FROM (
+         SELECT u.perfil, u.id AS usuario_id, u.nome,
+                COUNT(p.id)::int AS total
+           FROM usuarios u
+           LEFT JOIN pedidos p
+                  ON p.vendedor_id = u.id
+                 AND p.criado_em >= $1::date
+                 AND p.criado_em < ($2::date + interval '1 day')
+          WHERE u.perfil = 'vendedor' AND u.ativo = true
+          GROUP BY u.id, u.perfil, u.nome
+
+         UNION ALL
+
+         SELECT u.perfil, u.id AS usuario_id, u.nome,
+                COUNT(p.id)::int AS total
+           FROM usuarios u
+           LEFT JOIN pedidos p
+                  ON p.montador_id = u.id
+                 AND p.concluido_em >= $1::date
+                 AND p.concluido_em < ($2::date + interval '1 day')
+          WHERE u.perfil = 'montador' AND u.ativo = true
+          GROUP BY u.id, u.perfil, u.nome
+
+         UNION ALL
+
+         SELECT u.perfil, u.id AS usuario_id, u.nome,
+                COUNT(m.id)::int AS total
+           FROM usuarios u
+           LEFT JOIN movimentacao_estoque m
+                  ON m.usuario_id = u.id
+                 AND m.criado_em >= $1::date
+                 AND m.criado_em < ($2::date + interval '1 day')
+          WHERE u.perfil = 'estoque' AND u.ativo = true
+          GROUP BY u.id, u.perfil, u.nome
+       ) t
+      ORDER BY perfil ASC, total DESC`,
     [ymd(q.inicio), ymd(q.fim)]
   );
 };

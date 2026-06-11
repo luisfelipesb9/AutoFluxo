@@ -89,10 +89,10 @@ describe("pecaService", () => {
   });
 
   describe("listarEstoqueCritico", () => {
-    it("deve retornar peças onde estoque <= minimo", async () => {
+    it("filtra peças ativas com estoque < minimo (regra compartilhada)", async () => {
       const criticas = [
-        { id: 1, codigo: "A", estoque: 2, minimo: 5 },
-        { id: 2, codigo: "B", estoque: 0, minimo: 0 },
+        { id: 1, codigo: "A", estoque: 2, minimo: 5, ativo: true },
+        { id: 2, codigo: "B", estoque: 0, minimo: 3, ativo: true },
       ];
       const qb = createQueryBuilderMock(criticas);
       const repo = { createQueryBuilder: jest.fn(() => qb) };
@@ -100,7 +100,9 @@ describe("pecaService", () => {
 
       const result = await pecaService.listarEstoqueCritico();
 
-      expect(qb.where).toHaveBeenCalledWith("peca.estoque <= peca.minimo");
+      expect(qb.where).toHaveBeenCalledWith(
+        "peca.ativo = true AND peca.estoque < peca.minimo"
+      );
       expect(result).toEqual(criticas);
     });
   });

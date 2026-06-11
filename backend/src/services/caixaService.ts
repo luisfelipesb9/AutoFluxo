@@ -6,6 +6,7 @@ import { MovimentacaoEstoque } from "../entities/MovimentacaoEstoque";
 import { PedidoStatus, TipoMovimentacao } from "../entities/enums";
 import { assertTransition } from "../lib/state-machine";
 import { registrarLog } from "./logService";
+import { AuditAction, AuditEntity } from "../lib/auditActions";
 import {
   getPedidoOrThrow,
   getPedidoWithItens,
@@ -79,8 +80,8 @@ export const pagarPedido = async (
   // 3. Auditoria.
   await registrarLog({
     usuario_id: caixaId,
-    acao: "pedido.pagar",
-    entidade: "pedido",
+    acao: AuditAction.PEDIDO_PAGAR,
+    entidade: AuditEntity.PEDIDO,
     entidade_id: id,
     detalhe: data.forma_pagamento,
   });
@@ -154,8 +155,8 @@ export const cancelarPedido = async (
   // 4. Auditoria.
   await registrarLog({
     usuario_id: usuarioId,
-    acao: "pedido.cancelar",
-    entidade: "pedido",
+    acao: AuditAction.PEDIDO_CANCELAR,
+    entidade: AuditEntity.PEDIDO,
     entidade_id: id,
     detalhe: motivo,
   });
