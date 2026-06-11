@@ -2,6 +2,7 @@ import { AppDataSource } from "../lib/database";
 import { Peca } from "../entities/Peca";
 import { AppError } from "../lib/AppError";
 import { registrarLog } from "./logService";
+import { estoqueCriticoWhere } from "../lib/estoqueCritico";
 import type { CreatePecaRequest, UpdatePecaRequest } from "../schemas/peca";
 
 /**
@@ -23,14 +24,16 @@ export const listarPecas = async (q?: string): Promise<Peca[]> => {
 };
 
 /**
- * Retorna peças com estoque crítico (estoque <= minimo).
+ * Retorna peças com estoque crítico (regra compartilhada em
+ * `lib/estoqueCritico`: ativa e `estoque < minimo`). Versão operacional:
+ * entidade completa, ordenada por nome, liberada a todos os perfis.
  */
 export const listarEstoqueCritico = async (): Promise<Peca[]> => {
   const pecaRepository = AppDataSource.getRepository(Peca);
 
   return pecaRepository
     .createQueryBuilder("peca")
-    .where("peca.estoque <= peca.minimo")
+    .where(estoqueCriticoWhere("peca"))
     .orderBy("peca.nome", "ASC")
     .getMany();
 };

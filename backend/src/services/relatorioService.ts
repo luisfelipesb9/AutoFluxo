@@ -1,4 +1,5 @@
 import { AppDataSource } from "../lib/database";
+import { estoqueCriticoWhere } from "../lib/estoqueCritico";
 import {
   VendasQuery,
   PecasMaisVendidasQuery,
@@ -58,13 +59,15 @@ export const relatorioPecasMaisVendidas = async (
   );
 };
 
-// R3 — Estoque crítico: peças ativas abaixo do mínimo. qtd_faltante = minimo - estoque.
+// R3 — Estoque crítico: peças ativas abaixo do mínimo. qtd_faltante = minimo -
+// estoque. Mesma regra do GET /api/pecas/estoque-critico (lib/estoqueCritico);
+// aqui é a versão admin: subset + qtd_faltante, ordenada por quem falta mais.
 export const relatorioEstoqueCritico = async (): Promise<Row[]> => {
   return AppDataSource.query(
     `SELECT id, codigo, nome, estoque, minimo,
             (minimo - estoque) AS qtd_faltante
        FROM pecas
-      WHERE ativo = true AND estoque < minimo
+      WHERE ${estoqueCriticoWhere()}
       ORDER BY qtd_faltante DESC`
   );
 };

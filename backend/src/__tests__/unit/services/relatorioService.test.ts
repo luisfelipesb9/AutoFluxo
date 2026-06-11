@@ -61,7 +61,7 @@ describe("relatorioService", () => {
 
     const sql = queryMock.mock.calls[0][0];
     expect(sql).toContain("(minimo - estoque)");
-    expect(sql).toContain("estoque < minimo");
+    expect(sql).toContain("ativo = true AND estoque < minimo");
   });
 
   it("historicoCliente: usa celular como telefone e repassa placa", async () => {
