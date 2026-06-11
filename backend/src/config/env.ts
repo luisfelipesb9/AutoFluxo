@@ -10,6 +10,7 @@ const envSchema = z.object({
   DB_PASSWORD: z.string(),
   DB_NAME: z.string(),
   OPENAI_API_KEY: z.string().optional(),
+  DB_READONLY_PASSWORD: z.string().optional(),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

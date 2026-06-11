@@ -1,4 +1,4 @@
-import { AppDataSource } from "../lib/database";
+import { getReadOnlyDataSource } from "../lib/readonlyDatabase";
 import { AppError } from "../lib/AppError";
 import { assertSafeSelect, injectLimit } from "../lib/sqlGuard";
 import { registrarLog } from "./logService";
@@ -8,6 +8,7 @@ import logger from "../lib/logger";
 const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
 const MODEL = "gpt-4o-mini";
 const TIMEOUT_MS = 8000;
+const STMT_TIMEOUT_MS = 5000;
 const MAX_ROWS = 100;
 const ERRO_IA = "Busca por IA indisponível no momento.";
 
@@ -104,6 +105,10 @@ const limparSql = (raw: string): string =>
 export const buscarPorLinguagemNatural = async (
   pergunta: string
 ): Promise<SearchResult> => {
+  // Garante a infra read-only ANTES de gastar a chamada à OpenAI (fail-closed):
+  // sem a role/senha, a busca já responde 503 aqui.
+  const dataSource = await getReadOnlyDataSource();
+
   const bruto = await gerarSql(pergunta);
   const limpo = limparSql(bruto);
 
@@ -112,15 +117,20 @@ export const buscarPorLinguagemNatural = async (
 
   let rows: unknown[];
   try {
-    rows = await AppDataSource.transaction(async (manager) => {
+    rows = await dataSource.transaction(async (manager) => {
       await manager.query("SET TRANSACTION READ ONLY");
+      // A role read-only não escreve, mas poderia varrer tabelas grandes —
+      // cancela a consulta após STMT_TIMEOUT_MS.
+      await manager.query(`SET LOCAL statement_timeout = ${STMT_TIMEOUT_MS}`);
       return manager.query(sql);
     });
   } catch (error) {
-    logger.warn(
-      { error: (error as Error).message, sql },
-      "Falha ao executar SQL gerado"
-    );
+    const message = (error as Error).message;
+    logger.warn({ error: message, sql }, "Falha ao executar SQL gerado");
+    // 57014 = query_canceled (estouro do statement_timeout).
+    if (/statement timeout|canceling statement/i.test(message)) {
+      throw new AppError(400, "A consulta gerada excedeu o tempo limite.");
+    }
     throw new AppError(400, "Não foi possível executar a consulta gerada.");
   }
 
