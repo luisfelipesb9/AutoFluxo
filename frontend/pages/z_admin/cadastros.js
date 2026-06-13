@@ -1,5 +1,5 @@
 /**
- * pages/admin/cadastros.js
+ * pages/z_admin/cadastros.js
  * ============================================================
  * Controlador da página de Cadastros (Usuários / Peças / Clientes).
  *
@@ -19,6 +19,7 @@ import { DataTable }    from '../../core/table.js';
 import { openModal, closeModal, initModals } from '../../components/modal.js';
 import { showToast }    from '../../components/toast.js';
 import { api, ApiError } from '../../core/api.js';
+import { escapeHtml }   from '../../core/utils.js';
 
 /* ── Guard ──────────────────────────────────────────────── */
 requireAuth('../../login.html');
@@ -83,10 +84,11 @@ const COLUMNS = {
 const RENDERERS = {
   usuarios: (item) => {
     const ativo = item.ativo !== false;
+    // IDs are numeric — safe to interpolate directly. Text fields use escapeHtml.
     return `
-    <td>${item.nome}</td>
-    <td class="u-text-muted">${item.login}</td>
-    <td>${PERFIL_LABEL[item.perfil] || item.perfil}</td>
+    <td>${escapeHtml(item.nome)}</td>
+    <td class="u-text-muted">${escapeHtml(item.login)}</td>
+    <td>${escapeHtml(PERFIL_LABEL[item.perfil] || item.perfil)}</td>
     <td>
       <span class="badge ${ativo ? 'badge--pago' : 'badge--cancelado'}">
         <span class="badge__dot"></span>${ativo ? 'Ativo' : 'Inativo'}
@@ -108,11 +110,11 @@ const RENDERERS = {
   pecas: (item) => {
     const critical = item.estoque <= item.minimo;
     return `
-      <td><code>${item.codigo}</code></td>
-      <td>${item.nome}</td>
+      <td><code>${escapeHtml(item.codigo)}</code></td>
+      <td>${escapeHtml(item.nome)}</td>
       <td>${_fmtCurrency(item.preco)}</td>
-      <td><strong>${item.estoque}</strong></td>
-      <td>${item.minimo}</td>
+      <td><strong>${Number(item.estoque)}</strong></td>
+      <td>${Number(item.minimo)}</td>
       <td>
         <span class="${critical ? 'stock-critical' : 'stock-ok'}">
           <span class="stock-dot"></span>${critical ? 'Crítico' : 'OK'}
@@ -135,10 +137,10 @@ const RENDERERS = {
     <td>
       <button class="expand-btn" id="expandBtn-${item.id}" onclick="window._toggleVehicles(${item.id}, this)" aria-expanded="false">
         <svg aria-hidden="true"><use href="../../icons/icons.svg#icon-chevron-right"/></svg>
-        ${item.nome}
+        ${escapeHtml(item.nome)}
       </button>
     </td>
-    <td>${item.telefone}</td>
+    <td>${escapeHtml(item.telefone)}</td>
     <td class="u-text-muted">${(item.veiculos || []).length} veículo(s)</td>
     <td>
       <div class="row-actions">
@@ -245,7 +247,7 @@ window._toggleVehicles = function(clienteId, btn) {
     ? veiculos.map((v) => `
         <div class="vehicle-item">
           <svg aria-hidden="true"><use href="../../icons/icons.svg#icon-car"/></svg>
-          <strong>${v.placa}</strong> — ${v.modelo || '—'}${v.ano ? ` · ${v.ano}` : ''}
+          <strong>${escapeHtml(v.placa)}</strong> — ${escapeHtml(v.modelo) || '—'}${v.ano ? ` · ${escapeHtml(v.ano)}` : ''}
         </div>`).join('')
     : `<p class="u-text-muted" style="font-size:var(--font-size-sm)">Nenhum veículo vinculado.</p>`;
 
@@ -326,13 +328,13 @@ function _renderFormFields(item) {
           id="${f.id}"
           class="field__input"
           placeholder=" "
-          value="${f.value}"
+          value="${escapeHtml(f.value)}"
           autocomplete="off"
           ${f.disabled ? 'disabled' : ''}
           ${f.step ? `step="${f.step}"` : ''}
           ${f.min  ? `min="${f.min}"` : ''}
         >
-        <label class="field__label" for="${f.id}">${f.label}</label>
+        <label class="field__label" for="${f.id}">${escapeHtml(f.label)}</label>
       </div>
     `;
   }).join('');

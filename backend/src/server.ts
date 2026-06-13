@@ -24,7 +24,29 @@ async function bootstrap(): Promise<express.Application> {
   app.set("trust proxy", true);
 
   // Middlewares de segurança
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'none'"],
+          scriptSrc:  ["'self'"],
+          styleSrc:   ["'self'"],
+          imgSrc:     ["'self'", "data:"],
+          connectSrc: ["'self'"],
+          fontSrc:    ["'self'"],
+          objectSrc:  ["'none'"],
+          frameAncestors: ["'none'"],
+        },
+      },
+      // Impede que o navegador infira o tipo MIME — bloqueia MIME-sniffing attacks.
+      noSniff: true,
+      // Força HTTPS em produção.
+      strictTransportSecurity: process.env.NODE_ENV === "production"
+        ? { maxAge: 31_536_000, includeSubDomains: true }
+        : false,
+    })
+  );
+
   // CORS_ORIGIN aceita uma lista separada por vírgula, p.ex.:
   // "http://localhost:3000,http://192.168.1.13:3000"
   const corsOrigins = (process.env.CORS_ORIGIN ?? "http://localhost:3000")
@@ -37,6 +59,22 @@ async function bootstrap(): Promise<express.Application> {
       credentials: true,
     })
   );
+
+  // Defense-in-depth contra CSRF: a API só aceita requisições que incluam o header
+  // customizado X-Requested-With. Browsers não enviam headers customizados em
+  // requisições cross-origin sem preflight — o que já é impedido pela política CORS.
+  // Rotas públicas (/auth, /docs) são excluídas abaixo via router, mas adicionamos
+  // aqui um guard nas rotas /api (exceto preflight OPTIONS).
+  app.use("/api", (req, res, next) => {
+    if (req.method === "OPTIONS") return next();
+    // Rotas públicas não precisam do header.
+    const isPublic =
+      req.path.startsWith("/auth/") || req.path.startsWith("/docs");
+    if (!isPublic && !req.headers["x-requested-with"]) {
+      return res.status(400).json({ error: "Header X-Requested-With ausente" });
+    }
+    return next();
+  });
 
   // Logger HTTP
   app.use(pinoHttp({ logger }));

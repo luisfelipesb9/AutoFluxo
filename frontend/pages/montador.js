@@ -3,6 +3,7 @@ import { initLayout }                        from '../components/layout.js';
 import { openModal, closeModal, initModals } from '../components/modal.js';
 import { showToast }                         from '../components/toast.js';
 import { api, ApiError }                     from '../core/api.js';
+import { escapeHtml }                        from '../core/utils.js';
 
 requireAuth('../login.html');
 
@@ -123,26 +124,26 @@ function buildQueueCard(p) {
   card.dataset.pedidoId = p.id;
 
   const itensText = p.itens.length
-    ? p.itens.map(i => `${i.qtd}× ${i.descricao}`).join(', ')
+    ? p.itens.map(i => `${Number(i.qtd)}× ${escapeHtml(i.descricao)}`).join(', ')
     : 'Sem itens';
 
   const vehicleHtml = p.veiculo ? `
     <div class="montador-card__vehicle">
       <svg aria-hidden="true"><use href="../icons/icons.svg#icon-car"/></svg>
-      <span>${p.veiculo.modelo} · ${p.veiculo.placa}</span>
+      <span>${escapeHtml(p.veiculo.modelo)} · ${escapeHtml(p.veiculo.placa)}</span>
     </div>` : '';
 
   card.innerHTML = `
     <div class="montador-card__header">
-      <span class="montador-card__os">${p.os}</span>
+      <span class="montador-card__os">${escapeHtml(p.os)}</span>
       <span class="montador-card__wait">há ${formatElapsed(p.criadoEm)}</span>
     </div>
-    <div class="montador-card__client">${p.cliente.nome}</div>
+    <div class="montador-card__client">${escapeHtml(p.cliente.nome)}</div>
     ${vehicleHtml}
     <div class="montador-card__items" title="${itensText}">${itensText}</div>
     <button class="btn btn--success btn--full montador-card__action"
             data-pedido-id="${p.id}"
-            aria-label="Confirmar recebimento do pedido ${p.os}">
+            aria-label="Confirmar recebimento do pedido ${escapeHtml(p.os)}">
       <svg aria-hidden="true"><use href="../icons/icons.svg#icon-check"/></svg>
       Confirmar Recebimento
     </button>
@@ -201,28 +202,28 @@ function buildInProgressCard(p) {
   const elapsed = formatElapsed(iniciadoEm);
 
   const itensText = p.itens.length
-    ? p.itens.map(i => `${i.qtd}× ${i.descricao}`).join(', ')
+    ? p.itens.map(i => `${Number(i.qtd)}× ${escapeHtml(i.descricao)}`).join(', ')
     : 'Sem itens';
 
   const vehicleHtml = p.veiculo ? `
     <div class="montador-card__vehicle">
       <svg aria-hidden="true"><use href="../icons/icons.svg#icon-car"/></svg>
-      <span>${p.veiculo.modelo} · ${p.veiculo.placa}</span>
+      <span>${escapeHtml(p.veiculo.modelo)} · ${escapeHtml(p.veiculo.placa)}</span>
     </div>` : '';
 
   card.innerHTML = `
     <div class="montador-card__header">
-      <span class="montador-card__os">${p.os}</span>
+      <span class="montador-card__os">${escapeHtml(p.os)}</span>
       <span class="montador-card__timer" aria-label="Tempo de montagem: ${elapsed}">
         <span class="montador-card__timer-value">${elapsed}</span>
       </span>
     </div>
-    <div class="montador-card__client">${p.cliente.nome}</div>
+    <div class="montador-card__client">${escapeHtml(p.cliente.nome)}</div>
     ${vehicleHtml}
     <div class="montador-card__items" title="${itensText}">${itensText}</div>
     <button class="btn btn--accent btn--full montador-card__action"
             data-pedido-id="${p.id}"
-            aria-label="Concluir serviço do pedido ${p.os}">
+            aria-label="Concluir serviço do pedido ${escapeHtml(p.os)}">
       <svg aria-hidden="true"><use href="../icons/icons.svg#icon-check"/></svg>
       Concluir Serviço
     </button>
@@ -296,9 +297,9 @@ function buildHistoryRow(p) {
     : '—';
 
   row.innerHTML = `
-    <span class="montador-history-row__os">${p.os}</span>
-    <span class="montador-history-row__client">${p.cliente.nome}</span>
-    ${p.veiculo ? `<span class="montador-history-row__vehicle">${p.veiculo.placa}</span>` : '<span></span>'}
+    <span class="montador-history-row__os">${escapeHtml(p.os)}</span>
+    <span class="montador-history-row__client">${escapeHtml(p.cliente.nome)}</span>
+    ${p.veiculo ? `<span class="montador-history-row__vehicle">${escapeHtml(p.veiculo.placa)}</span>` : '<span></span>'}
     <span class="montador-history-row__time">${time}</span>
   `;
 

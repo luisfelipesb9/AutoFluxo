@@ -3,6 +3,7 @@ import { initLayout }                        from '../components/layout.js';
 import { showToast }                         from '../components/toast.js';
 import { openModal, closeModal, initModals } from '../components/modal.js';
 import { api, ApiError }                     from '../core/api.js';
+import { escapeHtml }                        from '../core/utils.js';
 
 requireAuth('../login.html');
 
@@ -116,14 +117,18 @@ function buildCardFila(pedido) {
   const emAndamento = pedido.status === 'em_separacao';
   const veiculo    = pedido.veiculo ? `${pedido.veiculo.modelo} · ${pedido.veiculo.placa}` : 'Sem veículo';
 
+  const veiculoEscaped = pedido.veiculo
+    ? `${escapeHtml(pedido.veiculo.modelo)} · ${escapeHtml(pedido.veiculo.placa)}`
+    : 'Sem veículo';
+
   card.innerHTML = `
     <div class="estoque-card__body">
       <div class="estoque-card__info">
-        <span class="estoque-card__os">${pedido.os}</span>
-        <span class="estoque-card__cliente">${pedido.cliente.nome}</span>
+        <span class="estoque-card__os">${escapeHtml(pedido.os)}</span>
+        <span class="estoque-card__cliente">${escapeHtml(pedido.cliente.nome)}</span>
         <span class="estoque-card__veiculo">
           ${svgIcon('car')}
-          ${veiculo}
+          ${veiculoEscaped}
         </span>
         <div class="estoque-card__meta">
           <span class="estoque-card__timer">${formatTimer(pedido.pagoEm)}</span>
@@ -222,24 +227,24 @@ function buildItemRow(item, idx) {
     : 'placeholder="—" disabled';
 
   row.innerHTML = `
-    <label class="separacao-item__check-wrap" aria-label="Confirmar item ${item.descricao}">
+    <label class="separacao-item__check-wrap" aria-label="Confirmar item ${escapeHtml(item.descricao)}">
       <input type="checkbox" class="separacao-item__checkbox" data-idx="${idx}" ${checkAttrs}>
       <span class="separacao-item__check-custom" aria-hidden="true">${svgIcon('check')}</span>
     </label>
     <div class="separacao-item__details">
       <div class="separacao-item__codigo-row">
-        <span class="separacao-item__codigo">${item.codigo}</span>
+        <span class="separacao-item__codigo">${escapeHtml(item.codigo)}</span>
         ${insuficiente ? `<span class="separacao-item__blocked-icon" aria-label="Estoque insuficiente">${svgIcon('alert')}</span>` : ''}
       </div>
-      <span class="separacao-item__descricao">${item.descricao}</span>
+      <span class="separacao-item__descricao">${escapeHtml(item.descricao)}</span>
     </div>
     <div class="separacao-item__qtd-bloco">
       <span class="separacao-item__qtd-label">Solicitado</span>
-      <span class="separacao-item__qtd-valor">${item.qtdSolicitada}</span>
+      <span class="separacao-item__qtd-valor">${Number(item.qtdSolicitada)}</span>
     </div>
     <div class="separacao-item__estoque-bloco">
       <span class="separacao-item__qtd-label">Em Estoque</span>
-      <span class="separacao-item__estoque-valor ${insuficiente ? 'separacao-item__estoque--critico' : ''}">${item.estoqueDisponivel}</span>
+      <span class="separacao-item__estoque-valor ${insuficiente ? 'separacao-item__estoque--critico' : ''}">${Number(item.estoqueDisponivel)}</span>
     </div>
     <div class="separacao-item__confirm-bloco">
       <label class="separacao-item__qtd-label" for="confirm-${idx}">Qtd confirmada</label>
@@ -248,9 +253,9 @@ function buildItemRow(item, idx) {
         id="confirm-${idx}"
         class="separacao-item__confirm-input"
         min="1"
-        max="${item.estoqueDisponivel}"
+        max="${Number(item.estoqueDisponivel)}"
         ${inputAttrs}
-        aria-label="Quantidade confirmada para ${item.descricao}"
+        aria-label="Quantidade confirmada para ${escapeHtml(item.descricao)}"
       >
     </div>
   `;

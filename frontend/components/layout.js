@@ -10,6 +10,7 @@
  * ============================================================ */
 
 import { getUser, logout }               from '../core/auth.js';
+import { escapeHtml }                    from '../core/utils.js';
 import { getRoutesForRole, resolvePath, getCurrentDepth } from '../core/router.js';
 
 /**
@@ -67,8 +68,8 @@ function _buildSidebar(user, depth) {
         <use href="${resolvePath('icons/icons.svg', depth)}#icon-user"/>
       </svg>
       <div class="sidebar-footer__text">
-        <span class="sidebar-footer__name">${user.name}</span>
-        <span class="sidebar-footer__role">${_roleLabel(user.role)}</span>
+        <span class="sidebar-footer__name">${escapeHtml(user.name)}</span>
+        <span class="sidebar-footer__role">${escapeHtml(_roleLabel(user.role))}</span>
       </div>
     </div>
     <button class="sidebar-footer__logout" id="sidebarLogoutBtn" aria-label="Sair do sistema">

@@ -54,6 +54,9 @@ class ApiError extends Error {
 async function apiFetch(path, { method = 'GET', body, auth = true, headers = {} } = {}) {
   const opts = { method, headers: { ...headers } };
 
+  // Sempre envia o header customizado exigido pelo backend como defense-in-depth CSRF.
+  opts.headers['X-Requested-With'] = 'XMLHttpRequest';
+
   if (body !== undefined) {
     opts.headers['Content-Type'] = 'application/json';
     opts.body = JSON.stringify(body);

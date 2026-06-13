@@ -42,6 +42,6 @@ router.use("/pedidos", montagemRouter);
 // Módulo de IA, relatórios e administração (RBAC admin nas próprias rotas).
 router.use("/search", searchRouter);
 router.use("/relatorios", relatoriosRouter);
-router.use("/admin", adminRouter);
+router.use("/z_admin", adminRouter);
 
 export default router;

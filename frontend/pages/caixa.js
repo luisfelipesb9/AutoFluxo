@@ -3,6 +3,7 @@ import { initLayout }                              from '../components/layout.js
 import { openModal, closeModal, initModals }       from '../components/modal.js';
 import { showToast }                               from '../components/toast.js';
 import { api, ApiError }                           from '../core/api.js';
+import { escapeHtml }                              from '../core/utils.js';
 
 requireAuth('../login.html');
 
@@ -146,13 +147,13 @@ function buildCard(order) {
 
   card.innerHTML = `
     <div class="order-card__top">
-      <span class="order-card__os">${order.os}</span>
+      <span class="order-card__os">${escapeHtml(order.os)}</span>
       <span class="order-card__timer${urgent ? ' order-card__timer--urgent' : ''}">${formatTimer(order.criadoEm)}</span>
     </div>
-    <div class="order-card__client">${order.cliente.nome}</div>
+    <div class="order-card__client">${escapeHtml(order.cliente.nome)}</div>
     <div class="order-card__vehicle">
       <svg aria-hidden="true"><use href="../icons/icons.svg#icon-car"/></svg>
-      <span>${order.veiculo ? `${order.veiculo.modelo} · ${order.veiculo.placa}` : 'Sem veículo'}</span>
+      <span>${order.veiculo ? `${escapeHtml(order.veiculo.modelo)} · ${escapeHtml(order.veiculo.placa)}` : 'Sem veículo'}</span>
     </div>
     ${returned ? `
     <div class="order-card__urgent-badge order-card__urgent-badge--returned">
@@ -195,8 +196,8 @@ function selectOrder(id) {
 
   document.getElementById('detailItemsBody').innerHTML = order.itens.map(item => `
     <tr>
-      <td>${item.descricao}</td>
-      <td class="items-table__num">${item.qtd}</td>
+      <td>${escapeHtml(item.descricao)}</td>
+      <td class="items-table__num">${Number(item.qtd)}</td>
       <td class="items-table__num">${fmt(item.valorUnitario)}</td>
       <td class="items-table__num">${fmt(item.qtd * item.valorUnitario)}</td>
     </tr>

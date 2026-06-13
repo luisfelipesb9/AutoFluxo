@@ -15,7 +15,7 @@ const buildApp = () => {
     req.user = { id: 1, login: "admin", perfil: currentPerfil };
     next();
   });
-  app.use("/admin", adminRouter);
+  app.use("/z_admin", adminRouter);
   app.use(errorHandler);
   return app;
 };
@@ -27,7 +27,7 @@ beforeEach(() => {
   currentPerfil = "admin";
 });
 
-describe("GET /admin/logs", () => {
+describe("GET /z_admin/logs", () => {
   it("retorna 200 paginado e repassa os filtros coeridos", async () => {
     (logQueryService.listarLogs as jest.Mock).mockResolvedValue({
       data: [],
@@ -36,7 +36,7 @@ describe("GET /admin/logs", () => {
       total: 0,
     });
 
-    const res = await request(app).get("/admin/logs?usuario_id=3");
+    const res = await request(app).get("/z_admin/logs?usuario_id=3");
 
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ page: 1, pageSize: 50, total: 0 });
@@ -48,7 +48,7 @@ describe("GET /admin/logs", () => {
   it("retorna 403 para usuário não-admin", async () => {
     currentPerfil = "estoque";
 
-    const res = await request(app).get("/admin/logs");
+    const res = await request(app).get("/z_admin/logs");
 
     expect(res.status).toBe(403);
     expect(logQueryService.listarLogs).not.toHaveBeenCalled();

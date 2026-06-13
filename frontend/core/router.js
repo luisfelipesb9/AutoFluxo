@@ -49,7 +49,7 @@ const ROUTES = [
     roles: ['admin', 'estoque'],
   },
   {
-    path:  'pages/admin/cadastros.html',
+    path:  'pages/z_admin/cadastros.html',
     label: 'Cadastros',
     icon:  'icon-cadastros',
     roles: ['admin'],

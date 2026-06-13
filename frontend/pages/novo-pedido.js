@@ -16,6 +16,7 @@ import { requireAuth } from '../core/auth.js';
 import { initLayout }  from '../components/layout.js';
 import { showToast }   from '../components/toast.js';
 import { api, ApiError } from '../core/api.js';
+import { escapeHtml }   from '../core/utils.js';
 
 /* ── Guard ──────────────────────────────────────────────── */
 requireAuth('../login.html');
@@ -178,22 +179,22 @@ function _initStep1() {
     }
 
     if (!found.length) {
-      results.innerHTML = `<div class="search-results__empty">Nenhum cliente encontrado para "${term}"</div>`;
+      results.innerHTML = `<div class="search-results__empty">Nenhum cliente encontrado para "${escapeHtml(term)}"</div>`;
       _openResults(results, input);
       return;
     }
 
     results.innerHTML = found.map(c => `
       <div class="search-results__item" role="option" data-id="${c.id}" tabindex="0"
-           aria-label="${c.nome}, ${c.telefone}">
+           aria-label="${escapeHtml(c.nome)}, ${escapeHtml(c.telefone)}">
         <div class="search-results__body">
-          <div class="search-results__name">${c.nome}</div>
+          <div class="search-results__name">${escapeHtml(c.nome)}</div>
           <div class="search-results__meta">
-            ${c.placas.length ? c.placas.join(' · ') : 'Sem veículo'} &nbsp;·&nbsp; ${c.telefone}
+            ${c.placas.length ? c.placas.map(p => escapeHtml(p)).join(' · ') : 'Sem veículo'} &nbsp;·&nbsp; ${escapeHtml(c.telefone)}
           </div>
         </div>
         <div class="search-results__last">
-          ${c.ultimoPedido ? `Ped. ${c.ultimoPedido}` : '—'}
+          ${c.ultimoPedido ? `Ped. ${escapeHtml(String(c.ultimoPedido))}` : '—'}
         </div>
       </div>
     `).join('');
@@ -299,7 +300,7 @@ function _initStep2() {
     }
 
     if (!found.length) {
-      results.innerHTML = `<div class="search-results__empty">Nenhuma peça encontrada para "${term}"</div>`;
+      results.innerHTML = `<div class="search-results__empty">Nenhuma peça encontrada para "${escapeHtml(term)}"</div>`;
       _openResults(results, input);
       return;
     }
@@ -313,10 +314,10 @@ function _initStep2() {
              role="option"
              data-id="${p.id}"
              tabindex="${added ? -1 : 0}"
-             aria-label="${p.codigo} — ${p.nome}${added ? ', já adicionado' : ''}">
-          <span class="autocomplete-code">${p.codigo}</span>
-          <span class="autocomplete-name">${p.nome}</span>
-          <span class="autocomplete-stock">Estoque: ${p.estoque}</span>
+             aria-label="${escapeHtml(p.codigo)} — ${escapeHtml(p.nome)}${added ? ', já adicionado' : ''}">
+          <span class="autocomplete-code">${escapeHtml(p.codigo)}</span>
+          <span class="autocomplete-name">${escapeHtml(p.nome)}</span>
+          <span class="autocomplete-stock">Estoque: ${Number(p.estoque)}</span>
         </div>
       `;
     }).join('');
@@ -390,19 +391,19 @@ function _renderItems() {
   // Monta HTML; o empty fica fora da lista quando há itens
   const rows = state.items.map(item => `
     <div class="item-row" data-item-id="${item.id}">
-      <span class="item-row__code">${item.codigo}</span>
-      <span class="item-row__name">${item.nome}</span>
-      <div class="qty-control" aria-label="Quantidade de ${item.nome}">
+      <span class="item-row__code">${escapeHtml(item.codigo)}</span>
+      <span class="item-row__name">${escapeHtml(item.nome)}</span>
+      <div class="qty-control" aria-label="Quantidade de ${escapeHtml(item.nome)}">
         <button class="qty-btn" data-action="dec" data-id="${item.id}"
                 aria-label="Diminuir quantidade"
                 ${item.qty <= 1 ? 'disabled' : ''}>−</button>
         <input  class="qty-input" type="number" min="1"
-                value="${item.qty}" data-id="${item.id}"
+                value="${Number(item.qty)}" data-id="${item.id}"
                 aria-label="Quantidade">
         <button class="qty-btn" data-action="inc" data-id="${item.id}"
                 aria-label="Aumentar quantidade">+</button>
       </div>
-      <button class="item-remove" data-id="${item.id}" aria-label="Remover ${item.nome}">
+      <button class="item-remove" data-id="${item.id}" aria-label="Remover ${escapeHtml(item.nome)}">
         <svg aria-hidden="true"><use href="../icons/icons.svg#icon-trash"/></svg>
       </button>
     </div>
@@ -450,9 +451,9 @@ function _renderSummary() {
   const itemsEl = document.getElementById('summaryItems');
   itemsEl.innerHTML = state.items.map(item => `
     <div class="summary-item">
-      <span class="summary-item__code">${item.codigo}</span>
-      <span class="summary-item__name">${item.nome}</span>
-      <span class="summary-item__qty">× ${item.qty}</span>
+      <span class="summary-item__code">${escapeHtml(item.codigo)}</span>
+      <span class="summary-item__name">${escapeHtml(item.nome)}</span>
+      <span class="summary-item__qty">× ${Number(item.qty)}</span>
     </div>
   `).join('');
 }

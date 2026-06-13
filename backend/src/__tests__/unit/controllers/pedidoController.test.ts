@@ -115,11 +115,10 @@ describe("GET /pedidos", () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual([{ id: 1 }]);
-    expect(pedidoQuery.listPedidos).toHaveBeenCalledWith({
-      status: "aberto",
-      vendedor_id: 7,
-      data: "2026-06-10",
-    });
+    expect(pedidoQuery.listPedidos).toHaveBeenCalledWith(
+      { status: "aberto", vendedor_id: 7, data: "2026-06-10" },
+      expect.objectContaining({ id: 7, perfil: "vendedor" })
+    );
   });
 
   it("lista sem filtros quando a query é vazia", async () => {
@@ -128,7 +127,10 @@ describe("GET /pedidos", () => {
     const res = await request(buildApp()).get("/pedidos");
 
     expect(res.status).toBe(200);
-    expect(pedidoQuery.listPedidos).toHaveBeenCalledWith({});
+    expect(pedidoQuery.listPedidos).toHaveBeenCalledWith(
+      {},
+      expect.objectContaining({ id: 7, perfil: "vendedor" })
+    );
   });
 
   it("retorna 400 quando data está em formato inválido", async () => {
@@ -150,7 +152,10 @@ describe("GET /pedidos/:id", () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ id: 99 });
-    expect(pedidoQuery.getPedidoWithItens).toHaveBeenCalledWith(99);
+    expect(pedidoQuery.getPedidoWithItens).toHaveBeenCalledWith(
+      99,
+      expect.objectContaining({ id: 7, perfil: "vendedor" })
+    );
   });
 
   it("retorna 404 quando o pedido não existe", async () => {
