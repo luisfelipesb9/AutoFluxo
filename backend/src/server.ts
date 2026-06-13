@@ -26,6 +26,16 @@ export function createApp(): express.Application {
   // Confia no proxy reverso para resolver o IP real do cliente (X-Forwarded-For).
   app.set("trust proxy", true);
 
+  // Quando servido atrás de TLS (HTTPS=true), redireciona qualquer acesso http→https.
+  // Defense-in-depth: o nginx já redireciona na borda; isto protege acesso direto à
+  // porta do Node. req.secure respeita X-Forwarded-Proto graças ao "trust proxy".
+  if (config.HTTPS) {
+    app.use((req, res, next) => {
+      if (req.secure) return next();
+      return res.redirect(308, `https://${req.headers.host}${req.originalUrl}`);
+    });
+  }
+
   // Middlewares de segurança
   app.use(
     helmet({
@@ -43,8 +53,9 @@ export function createApp(): express.Application {
       },
       // Impede que o navegador infira o tipo MIME — bloqueia MIME-sniffing attacks.
       noSniff: true,
-      // Força HTTPS em produção.
-      strictTransportSecurity: process.env.NODE_ENV === "production"
+      // Só envia HSTS quando realmente há TLS (HTTPS=true). Em http puro o header
+      // seria ignorado pelo navegador e poderia travar o acesso em dev.
+      strictTransportSecurity: config.HTTPS
         ? { maxAge: 31_536_000, includeSubDomains: true }
         : false,
     })

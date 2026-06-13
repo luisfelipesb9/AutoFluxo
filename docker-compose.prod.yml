@@ -1,0 +1,81 @@
+# AutoFluxo — produção: backend + Postgres + nginx (TLS/proxy) + certbot (opcional).
+#
+# Variáveis vêm de .env.production (copie de .env.production.example e preencha).
+# IMPORTANTE: passe SEMPRE --env-file .env.production para a interpolação ${...} funcionar.
+#
+#   Auto-assinado / rede interna:
+#     scripts/gen-self-signed-cert.sh <hostname>
+#     docker compose --env-file .env.production -f docker-compose.prod.yml up -d
+#
+#   Let's Encrypt (domínio público, porta 80 exposta):
+#     DOMAIN=<dominio> EMAIL=<email> scripts/init-letsencrypt.sh
+#     docker compose --env-file .env.production -f docker-compose.prod.yml --profile letsencrypt up -d
+
+services:
+  db:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    # Sem porta publicada no host — só a rede interna do compose acessa.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env.production
+    environment:
+      NODE_ENV: production
+      HTTPS: "true"
+      DB_HOST: db          # sobrescreve o .env.production: dentro do compose o banco é "db".
+    expose:
+      - "4000"             # acessível só pelo nginx na rede do compose; sem porta no host.
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+      - ./frontend:/usr/share/nginx/html:ro
+      - ./nginx/certbot/www:/var/www/certbot:ro
+      - letsencrypt:/etc/letsencrypt
+
+  # Só sobe com --profile letsencrypt. No caminho auto-assinado fica desligado.
+  # Renova a cada 12h e copia o cert renovado para nginx/certs/ (caminho lido pelo nginx).
+  # Após a renovação, recarregue o nginx (ver docs/DEPLOY-HTTPS.md).
+  certbot:
+    image: certbot/certbot
+    profiles: ["letsencrypt"]
+    volumes:
+      - ./nginx/certbot/www:/var/www/certbot
+      - ./nginx/certs:/certs
+      - letsencrypt:/etc/letsencrypt
+    entrypoint: ""
+    command: >
+      sh -c 'trap exit TERM;
+      while :; do
+        certbot renew --webroot -w /var/www/certbot
+          --deploy-hook "cp -L /etc/letsencrypt/live/*/fullchain.pem /certs/fullchain.pem; cp -L /etc/letsencrypt/live/*/privkey.pem /certs/privkey.pem";
+        sleep 12h & wait $${!};
+      done'
+
+volumes:
+  db_data:
+  letsencrypt:

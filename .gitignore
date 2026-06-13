@@ -13,6 +13,11 @@ backend/src/coverage/
 # Environment variables (contains sensitive keys)
 .env
 backend/.env
+.env.production
+.env.*.local
+
+# TLS: chaves/certificados de produção (NUNCA comitar)
+nginx/certs/*.pem
 
 # Local configuration and logs
 npm-debug.log*

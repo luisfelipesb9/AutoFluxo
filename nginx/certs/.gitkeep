@@ -1,0 +1,3 @@
+# Mantém a pasta no git. Os .pem (cert/chave) são ignorados e gerados no deploy:
+#   - auto-assinado: scripts/gen-self-signed-cert.sh
+#   - Let's Encrypt: scripts/init-letsencrypt.sh
