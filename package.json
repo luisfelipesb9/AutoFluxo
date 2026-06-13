@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only backend/src/server.ts",
+    "dev": "ts-node-dev --respawn --transpile-only backend/src/server.ts | pino-pretty",
     "build": "tsc -p .",
     "start": "node dist/server.js",
     "lint": "eslint backend/src",
