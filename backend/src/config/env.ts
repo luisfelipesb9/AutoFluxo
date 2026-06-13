@@ -27,7 +27,7 @@ export const validateEnv = (): EnvConfig => {
 
   if (!result.success) {
     console.error("❌ Erro ao validar variáveis de ambiente:");
-    result.error.errors.forEach((error) => {
+    result.error.issues.forEach((error) => {
       console.error(`  - ${error.path.join(".")}: ${error.message}`);
     });
     process.exit(1);

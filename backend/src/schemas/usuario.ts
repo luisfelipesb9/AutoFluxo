@@ -28,7 +28,7 @@ const senha = z
   .max(200, "Senha deve ter no máximo 200 caracteres");
 
 const perfil = z.nativeEnum(PerfilUsuario, {
-  errorMap: () => ({ message: "Perfil inválido" }),
+  error: "Perfil inválido",
 });
 
 export const createUsuarioSchema = z.object({
