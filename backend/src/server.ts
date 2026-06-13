@@ -14,10 +14,13 @@ import { requestContextMiddleware } from "./lib/requestContext";
 
 const config = validateEnv();
 
-async function bootstrap(): Promise<express.Application> {
-  // Initialize database
-  await initializeDatabase();
-
+/**
+ * Monta a aplicação Express (middlewares de segurança + rotas + error handler)
+ * sem inicializar o banco nem abrir o socket. Mantida pura para ser reutilizada
+ * em testes de integração (supertest) — por isso NÃO chama `initializeDatabase()`
+ * nem `app.listen()`. O bootstrap de produção é quem orquestra DB + listen.
+ */
+export function createApp(): express.Application {
   const app = express();
 
   // Confia no proxy reverso para resolver o IP real do cliente (X-Forwarded-For).
@@ -94,7 +97,17 @@ async function bootstrap(): Promise<express.Application> {
   // Error handler
   app.use(errorHandler);
 
-  // Iniciar servidor
+  return app;
+}
+
+/**
+ * Sobe o servidor de produção: inicializa o banco, monta o app e abre o socket.
+ */
+async function bootstrap(): Promise<express.Application> {
+  await initializeDatabase();
+
+  const app = createApp();
+
   const port = config.PORT;
   const server = app.listen(port, () => {
     logger.info(`✅ Server running on http://localhost:${port}`);
@@ -112,9 +125,14 @@ async function bootstrap(): Promise<express.Application> {
   return app;
 }
 
-bootstrap().catch((error) => {
-  logger.error({ error }, "Failed to start server");
-  process.exit(1);
-});
+// Só sobe o servidor quando este arquivo é o entrypoint (node dist/server.js).
+// Em testes que importam `createApp`, este bloco não roda — evita abrir o banco
+// e a porta no import.
+if (require.main === module) {
+  bootstrap().catch((error) => {
+    logger.error({ error }, "Failed to start server");
+    process.exit(1);
+  });
+}
 
 export default bootstrap;
