@@ -16,7 +16,7 @@ import { FormaPagamento } from "../entities/enums";
  */
 export const pagarSchema = z.object({
   forma_pagamento: z.nativeEnum(FormaPagamento, {
-    errorMap: () => ({ message: "forma_pagamento inválida" }),
+    error: "forma_pagamento inválida",
   }),
   valor: z.number().positive("valor deve ser maior que zero"),
 });

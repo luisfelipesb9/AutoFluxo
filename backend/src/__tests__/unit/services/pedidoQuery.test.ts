@@ -74,6 +74,83 @@ describe("pedidoQuery", () => {
         statusCode: 404,
       });
     });
+
+    // Controle de acesso (IDOR): `actor` restringe quem enxerga o pedido.
+    // Admin ve tudo; vendedor so o proprio; caixa/estoque/montador so quando o
+    // pedido esta no estagio do seu workflow. Caso contrario -> AppError 403.
+    describe("controle de acesso por actor", () => {
+      const comPedido = (pedido: unknown) => {
+        const repo = { findOne: jest.fn().mockResolvedValue(pedido) };
+        getRepositoryMock.mockReturnValue(repo);
+      };
+
+      it("admin acessa qualquer pedido (sem restricao)", async () => {
+        const pedido = { id: 5, status: "pago", vendedor_id: 1 };
+        comPedido(pedido);
+
+        const result = await pedidoQuery.getPedidoWithItens(5, {
+          id: 999,
+          perfil: "admin",
+        });
+
+        expect(result).toBe(pedido);
+      });
+
+      it("vendedor acessa o proprio pedido", async () => {
+        const pedido = { id: 6, status: "aberto", vendedor_id: 7 };
+        comPedido(pedido);
+
+        const result = await pedidoQuery.getPedidoWithItens(6, {
+          id: 7,
+          perfil: "vendedor",
+        });
+
+        expect(result).toBe(pedido);
+      });
+
+      it("vendedor NAO acessa pedido de outro vendedor -> 403", async () => {
+        comPedido({ id: 6, status: "aberto", vendedor_id: 7 });
+
+        await expect(
+          pedidoQuery.getPedidoWithItens(6, { id: 8, perfil: "vendedor" })
+        ).rejects.toMatchObject({
+          statusCode: 403,
+          message: expect.stringContaining("permitido"),
+        });
+      });
+
+      it("caixa acessa pedido no seu estagio (aguardando_pagamento)", async () => {
+        const pedido = { id: 9, status: "aguardando_pagamento", vendedor_id: 1 };
+        comPedido(pedido);
+
+        const result = await pedidoQuery.getPedidoWithItens(9, {
+          id: 2,
+          perfil: "caixa",
+        });
+
+        expect(result).toBe(pedido);
+      });
+
+      it("caixa NAO acessa pedido fora do seu estagio -> 403", async () => {
+        comPedido({ id: 9, status: "pago", vendedor_id: 1 });
+
+        await expect(
+          pedidoQuery.getPedidoWithItens(9, { id: 2, perfil: "caixa" })
+        ).rejects.toMatchObject({ statusCode: 403 });
+      });
+
+      it("estoque acessa pedido em um de seus estagios (pago)", async () => {
+        const pedido = { id: 10, status: "pago", vendedor_id: 1 };
+        comPedido(pedido);
+
+        const result = await pedidoQuery.getPedidoWithItens(10, {
+          id: 3,
+          perfil: "estoque",
+        });
+
+        expect(result).toBe(pedido);
+      });
+    });
   });
 
   describe("listPedidos", () => {
@@ -146,6 +223,45 @@ describe("pedidoQuery", () => {
       });
 
       expect(qb.andWhere).toHaveBeenCalledTimes(3);
+    });
+
+    // Scoping automatico por papel (alem dos filtros explicitos).
+    describe("scoping por actor", () => {
+      it("admin: sem scoping extra (sem filtros -> nenhum andWhere)", async () => {
+        const qb = createQueryBuilderMock([]);
+        const repo = { createQueryBuilder: jest.fn(() => qb) };
+        getRepositoryMock.mockReturnValue(repo);
+
+        await pedidoQuery.listPedidos({}, { id: 1, perfil: "admin" });
+
+        expect(qb.andWhere).not.toHaveBeenCalled();
+      });
+
+      it("vendedor: restringe por vendedor_id = actor.id", async () => {
+        const qb = createQueryBuilderMock([]);
+        const repo = { createQueryBuilder: jest.fn(() => qb) };
+        getRepositoryMock.mockReturnValue(repo);
+
+        await pedidoQuery.listPedidos({}, { id: 7, perfil: "vendedor" });
+
+        expect(qb.andWhere).toHaveBeenCalledWith(
+          "pedido.vendedor_id = :actorId",
+          { actorId: 7 }
+        );
+      });
+
+      it("caixa: restringe por status do seu estagio (IN)", async () => {
+        const qb = createQueryBuilderMock([]);
+        const repo = { createQueryBuilder: jest.fn(() => qb) };
+        getRepositoryMock.mockReturnValue(repo);
+
+        await pedidoQuery.listPedidos({}, { id: 2, perfil: "caixa" });
+
+        expect(qb.andWhere).toHaveBeenCalledWith(
+          "pedido.status IN (:...allowedStatuses)",
+          { allowedStatuses: ["aguardando_pagamento"] }
+        );
+      });
     });
   });
 });
