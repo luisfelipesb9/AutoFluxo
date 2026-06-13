@@ -13,9 +13,9 @@
     "test:coverage": "jest --coverage",
     "test:ci": "jest --ci --coverage --maxWorkers=2",
     "test:integration": "jest --config jest.integration.config.js --runInBand",
-    "migrate:up": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run -d backend/src/lib/database.ts",
-    "migrate:down": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:revert -d backend/src/lib/database.ts",
-    "migrate:seed": "ts-node -r tsconfig-paths/register backend/src/seeds/index.ts"
+    "migrate:up": "ts-node -r tsconfig-paths/register -r dotenv/config ./node_modules/typeorm/cli.js migration:run -d backend/src/lib/database.ts",
+    "migrate:down": "ts-node -r tsconfig-paths/register -r dotenv/config ./node_modules/typeorm/cli.js migration:revert -d backend/src/lib/database.ts",
+    "migrate:seed": "ts-node -r tsconfig-paths/register -r dotenv/config backend/src/seeds/index.ts"
   },
   "prepare": "husky install",
   "dependencies": {

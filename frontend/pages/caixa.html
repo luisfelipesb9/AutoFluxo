@@ -125,6 +125,15 @@
               <span id="detailTotal" class="detail-total__value"></span>
             </div>
 
+            <!-- Banner de devolução pelo estoque (visível apenas para devolvido_caixa) -->
+            <div id="devolutionWarning" class="devolution-warning u-hidden" role="alert">
+              <svg aria-hidden="true"><use href="../icons/icons.svg#icon-alert"/></svg>
+              <div>
+                <strong>Devolvido pelo Estoque</strong>
+                <p id="devolutionReason" class="devolution-warning__reason"></p>
+              </div>
+            </div>
+
             <div class="detail-payment">
               <div class="field">
                 <select id="paymentMethod" class="field__select" aria-label="Forma de pagamento">

@@ -1,9 +1,9 @@
+import "dotenv/config";
 import "reflect-metadata";
 import express from "express";
 import helmet from "helmet";
 import cors from "cors";
 import pinoHttp from "pino-http";
-import dotenv from "dotenv";
 import rootRouter from "./routes";
 import errorHandler from "./middleware/errorHandler";
 import { apiLimiter } from "./middleware/rateLimiter";
@@ -11,8 +11,6 @@ import { validateEnv } from "./config/env";
 import logger from "./lib/logger";
 import { initializeDatabase } from "./lib/database";
 import { requestContextMiddleware } from "./lib/requestContext";
-
-dotenv.config();
 
 const config = validateEnv();
 

@@ -1,0 +1,295 @@
+/* ============================================================
+   GERENCIAUTOMIX — MONTADOR
+   Fila de serviços e controle de início/conclusão para tablet.
+   Alvos de toque mínimo 48px; tipografia ampliada; cards grandes.
+   ============================================================ */
+
+/* ============================================================
+   Layout de seções
+   ============================================================ */
+.montador-layout {
+  display:        flex;
+  flex-direction: column;
+  gap:            var(--space-6);
+}
+
+/* ============================================================
+   Seção (panel card)
+   ============================================================ */
+.montador-section {
+  background:     var(--color-white);
+  border:         1px solid var(--color-border);
+  border-radius:  var(--radius-lg);
+  box-shadow:     var(--shadow-xs);
+  overflow:       hidden;
+}
+
+.montador-section__header {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  padding:         var(--space-4) var(--space-5);
+  border-bottom:   1px solid var(--color-border);
+  background:      var(--color-surface);
+}
+
+.montador-section__title-group {
+  display:     flex;
+  align-items: center;
+  gap:         var(--space-3);
+}
+
+.montador-section__title {
+  font-size:   var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  color:       var(--color-text-primary);
+}
+
+.montador-section__count {
+  min-width:     28px;
+  height:        28px;
+  display:       inline-flex;
+  align-items:   center;
+  justify-content: center;
+  background:    var(--color-primary);
+  color:         var(--color-text-inverse);
+  font-size:     var(--font-size-sm);
+  font-weight:   var(--font-weight-bold);
+  border-radius: var(--radius-full);
+  padding:       0 var(--space-2);
+}
+
+/* ============================================================
+   Grid de cards
+   ============================================================ */
+.montador-cards {
+  display:   grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap:       var(--space-4);
+  padding:   var(--space-4);
+}
+
+.montador-empty {
+  grid-column: 1 / -1;
+  padding:     var(--space-10) var(--space-4);
+  text-align:  center;
+  color:       var(--color-text-muted);
+  font-size:   var(--font-size-base);
+}
+
+/* ============================================================
+   Card do Montador (fila + em andamento)
+   ============================================================ */
+.montador-card {
+  background:     var(--color-white);
+  border:         1.5px solid var(--color-border);
+  border-radius:  var(--radius-lg);
+  padding:        var(--space-5);
+  min-height:     120px;
+  display:        flex;
+  flex-direction: column;
+  gap:            var(--space-3);
+  transition:     border-color var(--transition-base),
+                  box-shadow   var(--transition-base);
+}
+
+.montador-card:hover {
+  box-shadow:   var(--shadow-md);
+  border-color: var(--color-border-strong);
+}
+
+/* Cabeçalho do card */
+.montador-card__header {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+}
+
+.montador-card__os {
+  font-size:   var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color:       var(--color-text-primary);
+  letter-spacing: 0.5px;
+}
+
+.montador-card__wait {
+  font-size:   var(--font-size-sm);
+  color:       var(--color-text-muted);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Dados do cliente */
+.montador-card__client {
+  font-size:   var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color:       var(--color-text-primary);
+}
+
+/* Veículo */
+.montador-card__vehicle {
+  display:     flex;
+  align-items: center;
+  gap:         var(--space-2);
+  font-size:   var(--font-size-base);
+  color:       var(--color-text-secondary);
+}
+
+.montador-card__vehicle svg {
+  width:      16px;
+  height:     16px;
+  flex-shrink: 0;
+  color:      var(--color-text-muted);
+}
+
+/* Itens resumidos */
+.montador-card__items {
+  font-size:     var(--font-size-sm);
+  color:         var(--color-text-muted);
+  overflow:      hidden;
+  text-overflow: ellipsis;
+  white-space:   nowrap;
+}
+
+/* Timer (em andamento) */
+.montador-card__timer {
+  display:     flex;
+  align-items: center;
+  gap:         var(--space-1);
+  font-size:   var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color:       var(--color-warning-text);
+  background:  var(--color-warning-bg);
+  border:      1px solid var(--color-warning-border);
+  border-radius: var(--radius-full);
+  padding:     var(--space-1) var(--space-3);
+}
+
+/* Botão de ação — empurrado para o fundo do card */
+.montador-card__action {
+  margin-top: auto;
+  height:     52px;
+  font-size:  var(--font-size-base);
+}
+
+/* ============================================================
+   Variante: Em Andamento (âmbar)
+   ============================================================ */
+.montador-card--in-progress {
+  border-width:  3px;
+  border-color:  var(--color-accent);
+  background:    var(--color-accent-light);
+}
+
+.montador-card--in-progress:hover {
+  border-color: var(--color-accent-hover);
+}
+
+/* ============================================================
+   Botão verde de recebimento (success)
+   ============================================================ */
+.btn--success {
+  background:   var(--color-success);
+  color:        var(--color-text-inverse);
+  border-color: var(--color-success);
+}
+
+.btn--success:hover {
+  filter: brightness(0.92);
+}
+
+.btn--success.btn--loading::after {
+  border-color:     rgba(255,255,255,0.3);
+  border-top-color: var(--color-text-inverse);
+}
+
+/* ============================================================
+   Histórico do dia (lista compacta)
+   ============================================================ */
+.montador-section--history .montador-section__count {
+  background: var(--color-success);
+}
+
+.montador-history {
+  display:        flex;
+  flex-direction: column;
+  padding:        var(--space-2) 0;
+}
+
+.montador-history-row {
+  display:         grid;
+  grid-template-columns: 100px 1fr auto auto;
+  align-items:     center;
+  gap:             var(--space-4);
+  padding:         var(--space-3) var(--space-5);
+  border-bottom:   1px solid var(--color-border);
+  min-height:      48px;
+  transition:      background var(--transition-base);
+}
+
+.montador-history-row:last-child {
+  border-bottom: none;
+}
+
+.montador-history-row:hover {
+  background: var(--color-surface);
+}
+
+.montador-history-row__os {
+  font-size:   var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color:       var(--color-text-primary);
+}
+
+.montador-history-row__client {
+  font-size:     var(--font-size-sm);
+  color:         var(--color-text-secondary);
+  overflow:      hidden;
+  text-overflow: ellipsis;
+  white-space:   nowrap;
+}
+
+.montador-history-row__vehicle {
+  font-size:   var(--font-size-xs);
+  color:       var(--color-text-muted);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+}
+
+.montador-history-row__time {
+  font-size:   var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color:       var(--color-success);
+  white-space: nowrap;
+}
+
+/* ============================================================
+   Modal de confirmação
+   ============================================================ */
+.montador-confirm-text {
+  font-size:   var(--font-size-base);
+  color:       var(--color-text-primary);
+  line-height: var(--line-height-relaxed);
+}
+
+.montador-confirm-sub {
+  margin-top: var(--space-2);
+  font-size:  var(--font-size-sm);
+  color:      var(--color-text-muted);
+}
+
+/* ============================================================
+   Responsivo — mobile (< 600px)
+   ============================================================ */
+@media (max-width: 600px) {
+  .montador-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .montador-history-row {
+    grid-template-columns: 80px 1fr auto;
+  }
+
+  .montador-history-row__vehicle {
+    display: none;
+  }
+}

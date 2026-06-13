@@ -143,6 +143,26 @@
   color:       var(--color-text-muted);
 }
 
+/* Card devolvido pelo estoque */
+.order-card--returned {
+  border-color: var(--color-warning);
+  background:   var(--color-warning-bg);
+}
+
+.order-card--returned:hover {
+  border-color: var(--color-warning-text);
+}
+
+.order-card__urgent-badge--returned {
+  color:      var(--color-warning-text);
+  background: var(--color-warning-bg);
+  border:     1px solid var(--color-warning-border);
+}
+
+.order-card__urgent-badge--returned .order-card__urgent-dot {
+  background: var(--color-warning);
+}
+
 /* Badge urgente com pulso */
 .order-card__urgent-badge {
   display:       flex;
@@ -348,6 +368,40 @@
   font-size:   var(--font-size-xl);
   font-weight: var(--font-weight-bold);
   color:       var(--color-text-primary);
+}
+
+/* ============================================================
+   Banner de devolução pelo estoque
+   ============================================================ */
+.devolution-warning {
+  display:       flex;
+  align-items:   flex-start;
+  gap:           var(--space-3);
+  background:    var(--color-warning-bg);
+  border:        1px solid var(--color-warning-border);
+  border-radius: var(--radius-md);
+  padding:       var(--space-4);
+  color:         var(--color-warning-text);
+}
+
+.devolution-warning svg {
+  width:       20px;
+  height:      20px;
+  flex-shrink: 0;
+  margin-top:  2px;
+}
+
+.devolution-warning strong {
+  display:     block;
+  font-size:   var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.devolution-warning__reason {
+  margin-top: var(--space-1);
+  font-size:  var(--font-size-sm);
+  color:      var(--color-warning-text);
+  opacity:    0.85;
 }
 
 /* ============================================================

@@ -37,6 +37,12 @@ const ROUTES = [
     roles: ['admin', 'caixa'],
   },
   {
+    path:  'pages/montador.html',
+    label: 'Montagem',
+    icon:  'icon-estoque',
+    roles: ['admin', 'montador'],
+  },
+  {
     path:  'pages/estoque.html',
     label: 'Estoque',
     icon:  'icon-estoque',
@@ -78,14 +84,14 @@ function resolvePath(routePath, depth = 0) {
 }
 
 /**
- * Retorna a profundidade da página atual em relação a /frontend/.
+ * Retorna a profundidade da página atual em relação à raiz do servidor.
+ * Funciona tanto com servidor HTTP (localhost) quanto file://.
  * @returns {number}
  */
 function getCurrentDepth() {
-  const parts  = window.location.pathname.split('/');
-  const idx    = parts.indexOf('frontend');
-  if (idx === -1) return 0;
-  return parts.length - idx - 2; // -2: "frontend" + filename
+  const parts = window.location.pathname.split('/').filter(Boolean);
+  // parts.length - 1 remove o próprio filename; sobram os segmentos de pasta
+  return Math.max(0, parts.length - 1);
 }
 
 export { ROUTES, getRoutesForRole, resolvePath, getCurrentDepth };

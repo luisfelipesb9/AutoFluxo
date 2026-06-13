@@ -41,18 +41,22 @@ function adaptOrder(p) {
       qtd:           i.qtd,
       valorUnitario: Number(i.preco_unitario) || 0,
     })),
-    total:    Number(p.total) || 0,
-    criadoEm: new Date(p.criado_em),
-    status:   p.status,
+    total:           Number(p.total) || 0,
+    criadoEm:        new Date(p.criado_em),
+    status:          p.status,
+    motivoDevolucao: p.motivo_devolucao ?? null,
   };
 }
 
-/** Busca os pedidos abertos na API e re-renderiza a fila. */
+/** Busca os pedidos abertos e devolvidos pelo estoque e re-renderiza a fila. */
 async function fetchOrders() {
   const queue = document.getElementById('orderQueue');
   try {
-    const data = await api.get('/pedidos?status=aberto');
-    orders = (data || []).map(adaptOrder);
+    const [abertoData, devolvidoData] = await Promise.all([
+      api.get('/pedidos?status=aberto'),
+      api.get('/pedidos?status=devolvido_caixa'),
+    ]);
+    orders = [...(abertoData || []), ...(devolvidoData || [])].map(adaptOrder);
   } catch (err) {
     console.error('[caixa] falha ao carregar pedidos:', err);
     // Só mostra erro no lugar da fila se ainda não havia nada carregado.
@@ -103,9 +107,15 @@ function fmt(value) {
 function renderQueue() {
   const queue = document.getElementById('orderQueue');
   const count = document.getElementById('queueCount');
-  const open  = orders
-    .filter(o => o.status === 'aberto')
-    .sort((a, b) => a.criadoEm - b.criadoEm);
+
+  // devolvido_caixa primeiro (precisam de atenção imediata), depois abertos por tempo
+  const open = orders
+    .filter(o => o.status === 'aberto' || o.status === 'devolvido_caixa')
+    .sort((a, b) => {
+      if (a.status === 'devolvido_caixa' && b.status !== 'devolvido_caixa') return -1;
+      if (b.status === 'devolvido_caixa' && a.status !== 'devolvido_caixa') return 1;
+      return a.criadoEm - b.criadoEm;
+    });
 
   count.textContent = `${open.length} pedido${open.length !== 1 ? 's' : ''}`;
   queue.innerHTML   = '';
@@ -119,13 +129,18 @@ function renderQueue() {
 }
 
 function buildCard(order) {
-  const mins   = elapsedMinutes(order.criadoEm);
-  const urgent = mins > 30;
-  const active = order.id === selectedOrderId;
+  const mins      = elapsedMinutes(order.criadoEm);
+  const urgent    = mins > 30;
+  const active    = order.id === selectedOrderId;
+  const returned  = order.status === 'devolvido_caixa';
 
   const card = document.createElement('div');
-  card.className = ['order-card', urgent && 'order-card--urgent', active && 'order-card--selected']
-    .filter(Boolean).join(' ');
+  card.className = [
+    'order-card',
+    urgent   && 'order-card--urgent',
+    active   && 'order-card--selected',
+    returned && 'order-card--returned',
+  ].filter(Boolean).join(' ');
   card.setAttribute('role', 'listitem');
   card.dataset.orderId = order.id;
 
@@ -139,7 +154,11 @@ function buildCard(order) {
       <svg aria-hidden="true"><use href="../icons/icons.svg#icon-car"/></svg>
       <span>${order.veiculo ? `${order.veiculo.modelo} · ${order.veiculo.placa}` : 'Sem veículo'}</span>
     </div>
-    ${urgent ? `
+    ${returned ? `
+    <div class="order-card__urgent-badge order-card__urgent-badge--returned">
+      <span class="order-card__urgent-dot"></span>
+      Devolvido pelo estoque
+    </div>` : urgent ? `
     <div class="order-card__urgent-badge">
       <span class="order-card__urgent-dot"></span>
       Aguardando há mais de 30 min
@@ -183,12 +202,30 @@ function selectOrder(id) {
     </tr>
   `).join('');
 
-  const methodEl = document.getElementById('paymentMethod');
+  const methodEl        = document.getElementById('paymentMethod');
+  const paymentFieldEl  = methodEl.closest('.field');
+  const confirmBtn      = document.getElementById('confirmPaymentBtn');
+  const devBanner       = document.getElementById('devolutionWarning');
+  const devReasonEl     = document.getElementById('devolutionReason');
+  const devolvido       = order.status === 'devolvido_caixa';
+
+  // Resetar estado do painel antes de configurar para o novo pedido
   methodEl.value = '';
-  methodEl.closest('.field').classList.remove('field--filled');
+  paymentFieldEl.classList.remove('field--filled');
   document.getElementById('amountReceived').value = '';
   document.getElementById('cashFields').classList.add('u-hidden');
   updateChange();
+
+  if (devolvido) {
+    devBanner.classList.remove('u-hidden');
+    devReasonEl.textContent = order.motivoDevolucao ?? 'Sem motivo informado';
+    paymentFieldEl.classList.add('u-hidden');
+    confirmBtn.classList.add('u-hidden');
+  } else {
+    devBanner.classList.add('u-hidden');
+    paymentFieldEl.classList.remove('u-hidden');
+    confirmBtn.classList.remove('u-hidden');
+  }
 }
 
 function clearDetail() {
@@ -239,14 +276,15 @@ function initEventListeners() {
   document.getElementById('confirmPaymentBtn').addEventListener('click', async () => {
     if (!selectedOrderId) return;
 
+    const order = orders.find(o => o.id === selectedOrderId);
+    if (!order || order.status === 'devolvido_caixa') return;
+
     const method = document.getElementById('paymentMethod').value;
     if (!method) {
       showToast('Selecione a forma de pagamento.', 'warning');
       return;
     }
 
-    const order = orders.find(o => o.id === selectedOrderId);
-    if (!order) return;
     const total = calcTotal(order);
 
     if (method === 'dinheiro') {
